@@ -1,12 +1,8 @@
-<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Ghost body -->
-  <path d="M60 10C35 10 20 30 20 55V95C20 98 22 100 25 100C28 100 30 97 30 94V85C30 82 32 80 35 80C38 80 40 82 40 85V94C40 97 42 100 45 100C48 100 50 97 50 94V85C50 82 52 80 55 80C58 80 60 82 60 85V94C60 97 62 100 65 100C68 100 70 97 70 94V85C70 82 72 80 75 80C78 80 80 82 80 85V94C80 97 82 100 85 100C88 100 90 97 90 94V85C90 82 92 80 95 100C98 100 100 98 100 95V55C100 30 85 10 60 10Z" fill="white" fill-opacity="0.9"/>
-  <!-- Left eye -->
-  <circle cx="45" cy="45" r="8" fill="black"/>
-  <!-- Right eye -->
-  <circle cx="75" cy="45" r="8" fill="black"/>
-  <!-- Glint in left eye -->
-  <circle cx="43" cy="43" r="2" fill="white" fill-opacity="0.6"/>
-  <!-- Glint in right eye -->
-  <circle cx="73" cy="43" r="2" fill="white" fill-opacity="0.6"/>
+<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black square background with emerald border -->
+  <rect x="0" y="4" width="32" height="32" rx="3" fill="#000000" stroke="#10b981" stroke-width="1.5"/>
+  <!-- En text -->
+  <text x="16" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="600" fill="#10b981" text-anchor="middle">En</text>
+  <!-- ENGRAM text -->
+  <text x="48" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="400" letter-spacing="0.15em" fill="#d4d4d8">ENGRAM</text>
 </svg>

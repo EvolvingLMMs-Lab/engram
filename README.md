@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/packages/web/public/engram-logo.svg" width="100" alt="Engram">
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/packages/web/public/engram-logo.svg" width="180" alt="Engram">
 </p>
-
-<h1 align="center">Engram</h1>
 
 <p align="center">
   <strong>Biological memory fades. Digital memory leaks. We fixed both.</strong>
@@ -17,11 +15,19 @@
 
 ---
 
-Every conversation with your AI starts from zero. You explain your preferences. Again. You paste your API keys. Again. You describe your project. Again.
+Every conversation with your AI starts from zero.
+
+You explain your preferences. Again.
+
+You paste your API keys. Again.
+
+You describe your project. Again.
 
 The AI industry solved intelligence. It forgot about memory.
 
-Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Cursor, and any MCP-compatible AI. Think of it as Signal for AI memory - your data never leaves your device in plaintext, and we literally cannot read it even if we wanted to.
+Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Cursor, and any MCP-compatible AI.
+
+Think of it as Signal for AI memory - your data never leaves your device in plaintext, and we literally cannot read it even if we wanted to.
 
 ## Quick Start
 
