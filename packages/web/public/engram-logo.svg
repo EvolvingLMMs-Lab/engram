@@ -1,8 +1,8 @@
-<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Black square background with emerald border -->
-  <rect x="0" y="4" width="32" height="32" rx="3" fill="#000000" stroke="#10b981" stroke-width="1.5"/>
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black square with emerald border -->
+  <rect x="4" y="4" width="32" height="32" rx="4" fill="#000000" stroke="#10b981" stroke-opacity="0.6" stroke-width="1"/>
   <!-- En text -->
-  <text x="16" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="600" fill="#10b981" text-anchor="middle">En</text>
+  <text x="20" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="700" fill="#34d399" text-anchor="middle">En</text>
   <!-- ENGRAM text -->
-  <text x="48" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="400" letter-spacing="0.15em" fill="#d4d4d8">ENGRAM</text>
+  <text x="52" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="400" letter-spacing="0.1em" fill="#e4e4e7">ENGRAM</text>
 </svg>
