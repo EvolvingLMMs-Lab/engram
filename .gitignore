@@ -5,6 +5,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Model cache
+.cache/
+packages/core/.cache/
+
 # IDE
 .idea/
 .vscode/
