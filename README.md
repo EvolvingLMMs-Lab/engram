@@ -1,6 +1,21 @@
-# Engram
+<p align="center">
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/packages/web/public/engram-logo.svg" width="100" alt="Engram">
+</p>
 
-> Biological memory fades. Digital memory leaks. We fixed both.
+<h1 align="center">Engram</h1>
+
+<p align="center">
+  <strong>Biological memory fades. Digital memory leaks. We fixed both.</strong>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> -
+  <a href="#the-problem">Why</a> -
+  <a href="#architecture">Architecture</a> -
+  <a href="#security">Security</a>
+</p>
+
+---
 
 Every conversation with your AI starts from zero. You explain your preferences. Again. You paste your API keys. Again. You describe your project. Again.
 
@@ -27,23 +42,116 @@ This is not a technical limitation. It is a product decision. Cloud-based memory
 
 We rejected this tradeoff.
 
-## The Architecture
+## Architecture
 
 ```
-Your Device                          Cloud
-──────────────────────────────────────────────
-Master Key ──────── X ──────────► NEVER sent
-(lives in OS Keychain)
-
-Plaintext ───► [AES-256] ───────► Ciphertext only
-                                  (unreadable blob)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              AI CLIENTS                                     │
+│                                                                             │
+│    ┌──────────────┐      ┌──────────────┐      ┌──────────────┐            │
+│    │    Claude    │      │    Cursor    │      │   Claude     │            │
+│    │   Desktop    │      │              │      │    Code      │            │
+│    └──────┬───────┘      └──────┬───────┘      └──────┬───────┘            │
+│           │                     │                     │                     │
+│           └─────────────────────┼─────────────────────┘                     │
+│                                 │                                           │
+│                                 ▼                                           │
+│                    ┌────────────────────────┐                               │
+│                    │      MCP Protocol      │                               │
+│                    └────────────┬───────────┘                               │
+│                                 │                                           │
+└─────────────────────────────────┼───────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           ENGRAM SERVER                                     │
+│                                                                             │
+│    ┌──────────────┐      ┌──────────────┐      ┌──────────────┐            │
+│    │   Memory     │      │   Secrets    │      │   Session    │            │
+│    │   Store      │      │   Vault      │      │   Watcher    │            │
+│    └──────────────┘      └──────────────┘      └──────────────┘            │
+│                                                                             │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                    ▼                           ▼
+          ┌─────────────────┐         ┌─────────────────┐
+          │     SQLite      │         │    Supabase     │
+          │   ~/.engram/    │         │    (E2EE)       │
+          │                 │         │                 │
+          │   LOCAL-FIRST   │         │  ZERO-KNOWLEDGE │
+          └─────────────────┘         └─────────────────┘
 ```
 
-**Local-first**: SQLite + sqlite-vec on your machine. Works offline.
+## Security
 
-**Zero-knowledge sync**: When you enable cloud sync, the server only stores encrypted blobs. No plaintext. No metadata. No access.
+### Zero-Knowledge Encryption
 
-**BIP39 recovery**: 24-word mnemonic phrase. Lose your device, keep your memories.
+```
+YOUR DEVICE                                         CLOUD
+────────────────────────────────────────────────────────────────────
+
+                    ┌─────────────┐
+                    │ Master Key  │──────────── X ──────────► NEVER SENT
+                    │ (Keychain)  │
+                    └──────┬──────┘
+                           │
+                           ▼
+┌──────────┐       ┌──────────────┐       ┌──────────────┐
+│Plaintext │──────►│   AES-256    │──────►│  Ciphertext  │──────► Stored
+│          │       │     GCM      │       │  (opaque)    │
+└──────────┘       └──────────────┘       └──────────────┘
+
+The server stores encrypted blobs. It cannot decrypt them. Ever.
+```
+
+### Multi-Device Sync
+
+```
+┌────────────────────┐                    ┌────────────────────┐
+│      DEVICE A      │                    │      DEVICE B      │
+│     (MacBook)      │                    │     (Desktop)      │
+│                    │                    │                    │
+│  ┌──────────────┐  │   RSA-4096 Key     │  ┌──────────────┐  │
+│  │   Private    │  │    Exchange        │  │   Private    │  │
+│  │     Key      │◄─┼────────────────────┼─►│     Key      │  │
+│  └──────┬───────┘  │                    │  └──────┬───────┘  │
+│         │          │                    │         │          │
+│         ▼          │                    │         ▼          │
+│  ┌──────────────┐  │                    │  ┌──────────────┐  │
+│  │  Vault Key   │  │                    │  │  Vault Key   │  │
+│  │  (Decrypted) │  │                    │  │  (Decrypted) │  │
+│  └──────────────┘  │                    │  └──────────────┘  │
+└─────────┬──────────┘                    └─────────┬──────────┘
+          │                                         │
+          └──────────────────┬──────────────────────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │   CLOUD (E2EE)    │
+                   │                   │
+                   │  ┌─────────────┐  │
+                   │  │  Encrypted  │  │
+                   │  │    Blobs    │  │
+                   │  └─────────────┘  │
+                   │                   │
+                   │  Server cannot    │
+                   │  decrypt. Ever.   │
+                   └───────────────────┘
+```
+
+### Encryption Stack
+
+| Layer | Algorithm | Purpose |
+|-------|-----------|---------|
+| At Rest | AES-256-GCM | Memory & secrets encryption |
+| Key Exchange | RSA-4096 OAEP | Multi-device vault key distribution |
+| Key Derivation | PBKDF2-SHA256 | 600k iterations, brute-force resistant |
+| Blind Indexing | HMAC-SHA256 | Search without exposing content |
+| Recovery | BIP39 Mnemonic | 24-word phrase, recover anywhere |
+
+All crypto uses `node:crypto` (OpenSSL). No custom cryptography.
 
 ## How It Works
 
@@ -64,7 +172,7 @@ Claude: [calls mcp_read_memory] Based on your preferences,
 
 The AI doesn't need special prompts. It just remembers.
 
-## MCP Tools
+### MCP Tools
 
 | Tool | What it does |
 |------|--------------|
@@ -74,28 +182,16 @@ The AI doesn't need special prompts. It just remembers.
 | `mcp_set_secret` | Store new secrets |
 | `mcp_find_similar_sessions` | Find past sessions to fork from |
 
-## Security Stack
-
-| Layer | Implementation |
-|-------|----------------|
-| Encryption | AES-256-GCM |
-| Key derivation | PBKDF2-SHA256 (600k iterations) |
-| Key exchange | RSA-4096 OAEP |
-| Blind indexing | HMAC-SHA256 |
-| Recovery | BIP39 mnemonic |
-
-All crypto uses `node:crypto` (OpenSSL). No custom cryptography.
-
 ## Project Structure
 
 ```
 engram/
 ├── packages/
-│   ├── core/     # Crypto, embedding, sync engine
-│   ├── server/   # MCP server
-│   ├── cli/      # engram init, login, sync
-│   └── web/      # Dashboard (optional)
-└── supabase/     # E2EE sync backend
+│   ├── core/       # Crypto, embedding, sync engine
+│   ├── server/     # MCP server implementation
+│   ├── cli/        # engram init, login, sync
+│   └── web/        # Dashboard (optional)
+└── supabase/       # E2EE sync backend
 ```
 
 ## Development
@@ -108,36 +204,38 @@ pnpm -r build
 pnpm test
 ```
 
-## Why Not Just Use Claude Projects / ChatGPT Memory?
+## Why Not Claude Projects / ChatGPT Memory?
 
-| | Engram | ChatGPT Memory | Claude Projects |
-|---|---|---|---|
-| Local-first | Yes | No | No |
-| E2E Encrypted | Yes | No | No |
-| Cross-app | Yes (MCP) | ChatGPT only | Claude only |
-| Self-hostable | Yes | No | No |
-| Open source | Yes | No | No |
+```
+                    Engram          ChatGPT Memory      Claude Projects
+                    ──────          ──────────────      ───────────────
+Local-first         ✓               ✗ Cloud only        ✗ Cloud only
+E2E Encrypted       ✓               ✗                   ✗
+Cross-app           ✓ Any MCP       ✗ ChatGPT only      ✗ Claude only
+Self-hostable       ✓               ✗                   ✗
+Open source         ✓               ✗                   ✗
+```
 
 ## FAQ
 
 **What if I lose my device?**
-
 During `engram init`, you receive a 24-word recovery phrase. Write it down.
 
 **Can you read my memories?**
-
 No. Encryption keys are generated on your device and never transmitted.
 
 **Does this work offline?**
-
 Yes. Cloud sync is optional.
 
 **What if Engram shuts down?**
-
 Export anytime with `engram export`. It's just SQLite.
 
 ---
 
+<p align="center">
 MIT License
+</p>
 
-Your AI should remember you. Not the other way around.
+<p align="center">
+<strong>Your AI should remember you. Not the other way around.</strong>
+</p>
