@@ -1,0 +1,58 @@
+{
+  "name": "engram",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Privacy-first, cross-platform AI memory layer - Signal for AI Memory",
+  "keywords": [
+    "ai",
+    "memory",
+    "mcp",
+    "claude",
+    "e2ee",
+    "privacy",
+    "vector-search",
+    "engram"
+  ],
+  "homepage": "https://github.com/engram-labs/engram#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/engram-labs/engram.git"
+  },
+  "license": "MIT",
+  "author": "Engram Team",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "dev": "pnpm -r --parallel dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitest/coverage-v8": "^1.2.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.29.1",
+    "next": "^15.0.0",
+    "prettier": "^3.2.4",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "packageManager": "pnpm@8.15.1",
+  "engines": {
+    "node": "20.x"
+  }
+}

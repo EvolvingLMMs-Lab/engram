@@ -1,0 +1,64 @@
+{
+  "name": "engram-core",
+  "version": "0.0.1",
+  "description": "CLI for Engram - Privacy-first AI memory layer",
+  "license": "MIT",
+  "author": "Engram Team",
+  "homepage": "https://github.com/engram-labs/engram",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/engram-labs/engram.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "engram",
+    "ai",
+    "memory",
+    "mcp",
+    "claude",
+    "cursor",
+    "e2ee",
+    "privacy"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "engram": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "dev": "tsup --watch",
+    "start": "node dist/bin.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@engram/core": "workspace:*",
+    "@engram/server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "ora": "^8.0.1",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/qrcode-terminal": "^0.12.2"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

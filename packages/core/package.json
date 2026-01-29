@@ -1,0 +1,88 @@
+{
+  "name": "@engram/core",
+  "version": "0.0.1",
+  "description": "Core library for Engram - sqlite-vec, embeddings, crypto primitives, sync engine",
+  "license": "MIT",
+  "author": "Engram Team",
+  "homepage": "https://github.com/engram-labs/engram",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/engram-labs/engram.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./memory": {
+      "types": "./dist/memory/index.d.ts",
+      "import": "./dist/memory/index.js"
+    },
+    "./embedding": {
+      "types": "./dist/embedding/index.d.ts",
+      "import": "./dist/embedding/index.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js"
+    },
+    "./sync": {
+      "types": "./dist/sync/index.d.ts",
+      "import": "./dist/sync/index.js"
+    },
+    "./secrets": {
+      "types": "./dist/secrets/index.d.ts",
+      "import": "./dist/secrets/index.js"
+    },
+    "./indexing": {
+      "types": "./dist/indexing/index.d.ts",
+      "import": "./dist/indexing/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "benchmark": "tsx benchmark/embedding.bench.ts"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "better-sqlite3": "^11.0.0",
+    "chokidar": "^5.0.0",
+    "keytar": "^7.9.0",
+    "shamir-secret-sharing": "^0.0.4",
+    "sqlite-vec": "^0.1.6",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/uuid": "^9.0.7",
+    "tsx": "^4.21.0",
+    "vitest": "^1.2.0"
+  },
+  "peerDependencies": {
+    "onnxruntime-node": "^1.17.0"
+  },
+  "peerDependenciesMeta": {
+    "onnxruntime-node": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
