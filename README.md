@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/packages/web/public/engram-logo.svg" width="180" alt="Engram">
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg" width="180" alt="Engram">
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@ The AI industry solved intelligence. It forgot about memory.
 
 Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Cursor, and any MCP-compatible AI.
 
-Think of it as Signal for AI memory - your data never leaves your device in plaintext, and we literally cannot read it even if we wanted to.
+Think of it as Signal for AI memory - your data never leaves your device in plaintext.
 
 ## Quick Start
 
@@ -79,72 +79,37 @@ We rejected this tradeoff.
 │                                                               │
 └────────────────────────────┬──────────────────────────────────┘
                              │
-               ┌─────────────┴─────────────┐
-               │                           │
-               ▼                           ▼
-     ┌───────────────────┐       ┌───────────────────┐
-     │      SQLite       │       │     Supabase      │
-     │    ~/.engram/     │       │      (E2EE)       │
-     │                   │       │                   │
-     │    LOCAL-FIRST    │       │   ZERO-KNOWLEDGE  │
-     └───────────────────┘       └───────────────────┘
+                             ▼
+                  ┌─────────────────────┐
+                  │       SQLite        │
+                  │     ~/.engram/      │
+                  │                     │
+                  │     LOCAL-FIRST     │
+                  │   Your data stays   │
+                  │     on YOUR disk    │
+                  └─────────────────────┘
 ```
 
 ## Security
 
-### Zero-Knowledge Encryption
+### Encryption Flow
 
 ```
-YOUR DEVICE                                              CLOUD
-───────────────────────────────────────────────────────────────────
-
-                     ┌───────────────┐
-                     │  Master Key   │────────── X ────────► NEVER SENT
-                     │  (Keychain)   │
-                     └───────┬───────┘
-                             │
-                             ▼
-┌────────────┐       ┌───────────────┐       ┌───────────────┐
-│  Plaintext │──────►│   AES-256     │──────►│  Ciphertext   │─────► Stored
-│            │       │     GCM       │       │   (opaque)    │
-└────────────┘       └───────────────┘       └───────────────┘
-
-The server stores encrypted blobs. It cannot decrypt them. Ever.
-```
-
-### Multi-Device Sync
-
-```
-┌──────────────────────┐                  ┌──────────────────────┐
-│       DEVICE A       │                  │       DEVICE B       │
-│      (MacBook)       │                  │      (Desktop)       │
-│                      │                  │                      │
-│  ┌────────────────┐  │  RSA-4096 Key    │  ┌────────────────┐  │
-│  │    Private     │  │    Exchange      │  │    Private     │  │
-│  │      Key       │◄─┼──────────────────┼─►│      Key       │  │
-│  └───────┬────────┘  │                  │  └───────┬────────┘  │
-│          │           │                  │          │           │
-│          ▼           │                  │          ▼           │
-│  ┌────────────────┐  │                  │  ┌────────────────┐  │
-│  │   Vault Key    │  │                  │  │   Vault Key    │  │
-│  │  (Decrypted)   │  │                  │  │  (Decrypted)   │  │
-│  └────────────────┘  │                  │  └────────────────┘  │
-└──────────┬───────────┘                  └──────────┬───────────┘
-           │                                         │
-           └─────────────────┬───────────────────────┘
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │    CLOUD (E2EE)     │
-                  │                     │
-                  │  ┌───────────────┐  │
-                  │  │   Encrypted   │  │
-                  │  │     Blobs     │  │
-                  │  └───────────────┘  │
-                  │                     │
-                  │  Server cannot      │
-                  │  decrypt. Ever.     │
-                  └─────────────────────┘
+┌───────────────┐       ┌───────────────┐       ┌───────────────┐
+│  Master Key   │       │   AES-256     │       │   Encrypted   │
+│  (Keychain)   │──────►│     GCM       │──────►│   SQLite DB   │
+└───────────────┘       └───────────────┘       └───────────────┘
+        │
+        │ derived via PBKDF2-SHA256
+        │ (600k iterations)
+        ▼
+┌───────────────┐
+│  BIP39 Seed   │
+│  (24 words)   │
+│               │
+│  Write this   │
+│  down.        │
+└───────────────┘
 ```
 
 ### Encryption Stack
@@ -152,7 +117,6 @@ The server stores encrypted blobs. It cannot decrypt them. Ever.
 | Layer | Algorithm | Purpose |
 |-------|-----------|---------|
 | At Rest | AES-256-GCM | Memory & secrets encryption |
-| Key Exchange | RSA-4096 OAEP | Multi-device vault key distribution |
 | Key Derivation | PBKDF2-SHA256 | 600k iterations, brute-force resistant |
 | Blind Indexing | HMAC-SHA256 | Search without exposing content |
 | Recovery | BIP39 Mnemonic | 24-word phrase, recover anywhere |
@@ -193,11 +157,9 @@ The AI doesn't need special prompts. It just remembers.
 ```
 engram/
 ├── packages/
-│   ├── core/       # Crypto, embedding, sync engine
+│   ├── core/       # Crypto, embedding, storage engine
 │   ├── server/     # MCP server implementation
-│   ├── cli/        # engram init, login, sync
-│   └── web/        # Dashboard (optional)
-└── supabase/       # E2EE sync backend
+│   └── cli/        # engram init, status, export
 ```
 
 ## Development
@@ -228,10 +190,10 @@ Open source         ✓               ✗                   ✗
 During `engram init`, you receive a 24-word recovery phrase. Write it down.
 
 **Can you read my memories?**
-No. Encryption keys are generated on your device and never transmitted.
+No. Everything is encrypted locally. We have no server, no cloud, no access.
 
 **Does this work offline?**
-Yes. Cloud sync is optional.
+Yes. It's local-first. No internet required.
 
 **What if Engram shuts down?**
 Export anytime with `engram export`. It's just SQLite.

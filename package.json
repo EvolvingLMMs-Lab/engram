@@ -13,10 +13,10 @@
     "vector-search",
     "engram"
   ],
-  "homepage": "https://github.com/engram-labs/engram#readme",
+  "homepage": "https://github.com/EvolvingLMMs-Lab/engram#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/engram-labs/engram.git"
+    "url": "git+https://github.com/EvolvingLMMs-Lab/engram.git"
   },
   "license": "MIT",
   "author": "Engram Team",
@@ -45,7 +45,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.29.1",
-    "next": "^15.0.0",
     "prettier": "^3.2.4",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
