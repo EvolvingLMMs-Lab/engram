@@ -46,9 +46,9 @@ describe('SecretStore', () => {
     expect(count.c).toBe(1);
   });
 
-  it('should delete a secret', () => {
-    store.set('TEST_KEY', 'val1');
-    const deleted = store.delete('TEST_KEY');
+  it('should delete a secret', async () => {
+    await store.set('TEST_KEY', 'val1');
+    const deleted = await store.delete('TEST_KEY');
     expect(deleted).toBe(true);
 
     const val = store.get('TEST_KEY');
