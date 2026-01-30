@@ -1,5 +1,6 @@
 import { FSWatcher } from 'chokidar';
 import chokidar from 'chokidar';
+import { basename } from 'node:path';
 import type { IndexingService } from './service.js';
 
 export class SessionWatcher {
@@ -13,15 +14,17 @@ export class SessionWatcher {
     }
 
     this.watcher = chokidar.watch(paths, {
-      ignored: /(^|[\/\\])\../, // ignore dotfiles
+      // Only ignore entries whose own name starts with '.'
+      // (the old regex matched full paths, breaking ~/.claude/projects/)
+      ignored: (path: string) => basename(path).startsWith('.'),
       persistent: true,
       ignoreInitial: false, // Index existing files on startup
-      depth: 2,
+      depth: 3,
     });
 
     this.watcher
-      .on('add', (path: string) => this.handleFile(path))
-      .on('change', (path: string) => this.handleFile(path));
+      .on('add', (path: string) => this.handleFile(path, 'add'))
+      .on('change', (path: string) => this.handleFile(path, 'change'));
 
     console.log(`Watcher started on: ${paths.join(', ')}`);
   }
@@ -33,7 +36,7 @@ export class SessionWatcher {
     }
   }
 
-  private async handleFile(path: string): Promise<void> {
-    await this.indexer.ingestFile(path);
+  private async handleFile(path: string, event: 'add' | 'change'): Promise<void> {
+    await this.indexer.ingestFile(path, event);
   }
 }
