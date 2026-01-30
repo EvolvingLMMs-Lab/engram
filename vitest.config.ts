@@ -17,5 +17,8 @@ export default defineConfig({
       ],
     },
     testTimeout: 30000,
+    // Use forked processes to avoid SIGSEGV from native modules
+    // (sqlite-vec + shamir WASM conflict in shared threads)
+    pool: 'forks',
   },
 });
