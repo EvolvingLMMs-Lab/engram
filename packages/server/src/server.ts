@@ -88,9 +88,9 @@ export function createEngramServer(
   const indexer = new IndexingService(store, embedder);
   const watcher = new SessionWatcher(indexer);
 
-  // Start watching Claude sessions by default
-  const claudeSessionsPath = join(homedir(), '.claude', 'sessions');
-  watcher.watch([claudeSessionsPath]);
+  // Start watching Claude Code sessions (stored as JSONL in ~/.claude/projects/)
+  const claudeProjectsPath = join(homedir(), '.claude', 'projects');
+  watcher.watch([claudeProjectsPath]);
 
   server.tool(
     'mcp_get_secret',

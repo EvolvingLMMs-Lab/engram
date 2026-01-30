@@ -671,6 +671,21 @@ function getCursorConfigPath(): string {
   }
 }
 
+function getClaudeCodeConfigPath(): string {
+  return join(homedir(), '.claude.json');
+}
+
+function getEngramMcpConfig() {
+  return {
+    command: 'npx',
+    args: ['-y', 'engram-core', 'server'],
+    env: {
+      ENGRAM_PATH: join(homedir(), '.engram', 'memory.db'),
+      EMBEDDING_PROVIDER: 'local:onnx',
+    },
+  };
+}
+
 async function configureClients() {
   const configs = [
     {
@@ -683,6 +698,7 @@ async function configureClients() {
     },
   ];
 
+  // Configure Claude Desktop & Cursor (same format: { mcpServers: { engram: { ... } } })
   for (const config of configs) {
     const configDir = dirname(config.path);
     if (existsSync(configDir) || config.name === 'Cursor') {
@@ -697,14 +713,7 @@ async function configureClients() {
         }
 
         existing.mcpServers = existing.mcpServers ?? {};
-        existing.mcpServers['engram'] = {
-          command: 'npx',
-          args: ['-y', 'engram-core', 'server'],
-          env: {
-            ENGRAM_PATH: join(homedir(), '.engram', 'memory.db'),
-            EMBEDDING_PROVIDER: 'local:onnx',
-          },
-        };
+        existing.mcpServers['engram'] = getEngramMcpConfig();
 
         writeFileSync(config.path, JSON.stringify(existing, null, 2));
         console.log(chalk.green(`✓ Configured ${config.name}`));
@@ -712,5 +721,26 @@ async function configureClients() {
         console.log(chalk.yellow(`⚠ Could not configure ${config.name}`));
       }
     }
+  }
+
+  // Configure Claude Code (~/.claude.json uses top-level mcpServers with "type" field)
+  try {
+    const claudeCodePath = getClaudeCodeConfigPath();
+    let existing: Record<string, unknown> = {};
+    if (existsSync(claudeCodePath)) {
+      existing = JSON.parse(readFileSync(claudeCodePath, 'utf-8'));
+    }
+
+    const mcpServers = (existing.mcpServers ?? {}) as Record<string, unknown>;
+    mcpServers['engram'] = {
+      type: 'stdio',
+      ...getEngramMcpConfig(),
+    };
+    existing.mcpServers = mcpServers;
+
+    writeFileSync(claudeCodePath, JSON.stringify(existing, null, 2));
+    console.log(chalk.green('✓ Configured Claude Code'));
+  } catch {
+    console.log(chalk.yellow('⚠ Could not configure Claude Code'));
   }
 }
