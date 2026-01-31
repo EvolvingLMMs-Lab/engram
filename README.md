@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <code>MEMORY</code> /for AI/ · <code>PRIVACY</code> /by design/
+  <code>MEMORY</code> for AI · <code>PRIVACY</code> by design
 </p>
 
 <p align="center">
@@ -27,11 +27,11 @@
 
 ## What is Engram?
 
-A **local-first, end-to-end encrypted** memory layer for AI assistants.
+An **end-to-end encrypted** memory layer for AI assistants.
 
-**LOCAL-FIRST** - Your data never leaves your machine. No cloud. No servers. Just SQLite on your disk.
+**YOU HOLD THE KEYS** - AES-256-GCM encryption. Keys never leave your device. 24-word recovery phrase, like a crypto wallet.
 
-**ENCRYPTED** - AES-256-GCM encryption with keys only you control. 24-word recovery phrase, like a crypto wallet.
+**ZERO-KNOWLEDGE SYNC** - Sync across devices if you want. Server only sees ciphertext. We can't read your data. Ever.
 
 Works with Claude Desktop, Claude Code, Cursor, and any MCP-compatible client.
 
@@ -55,8 +55,8 @@ Restart your AI client. It remembers you now.
 | **E2E Encryption** | AES-256-GCM. Keys never leave your device. |
 | **Secrets Vault** | Encrypted storage for API keys and credentials |
 | **Session Search** | Find and resume past coding sessions instantly |
-| **Multi-Device Sync** | Zero-knowledge sync - server sees only ciphertext |
-| **Local-First** | Works offline. Your data stays on your disk. |
+| **Zero-Knowledge Sync** | Sync across devices. Server sees only ciphertext. |
+| **Offline Mode** | Works without internet. Your data, your control. |
 
 ## Security
 
@@ -73,8 +73,8 @@ All encryption uses `node:crypto` (OpenSSL). No custom cryptography.
 
 |                     | Engram | Cloud Memory |
 |---------------------|:------:|:------------:|
-| Where's your data?  | Your disk | Their servers |
-| Encryption          | E2E | They can read it |
+| Who holds the keys? | You | They do |
+| Can they read it?   | No | Yes |
 | Cross-app           | Any MCP client | Locked to one app |
 | Open source         | Yes | No |
 
