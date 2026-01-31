@@ -1,4 +1,6 @@
 import { readFile } from 'node:fs/promises';
+import { EventEmitter } from 'node:events';
+import type Database from 'better-sqlite3';
 import type { MemoryStore } from '../memory/store.js';
 import type { EmbeddingService } from '../embedding/service.js';
 import { LLMService } from '../llm/service.js';
@@ -15,48 +17,115 @@ export interface SessionParser {
   parse(path: string, content: string): Promise<IndexingResult | null>;
 }
 
+export interface IndexingEvent {
+  type: 'start' | 'parsed' | 'embedded' | 'stored' | 'skipped' | 'error';
+  path: string;
+  parserType?: string;
+  summary?: string;
+  memoryId?: string;
+  error?: string;
+  timestamp: number;
+}
+
 /**
- * Parser for Claude Code / Claude Desktop sessions
- * Parses JSON files from ~/.claude/sessions/
+ * Parser for Claude Code sessions
+ * Parses JSONL files from ~/.claude/projects/<project>/<session-id>.jsonl
+ *
+ * Each line is a JSON object with fields:
+ *   type: "user" | "assistant" | "summary" | "progress" | "file-history-snapshot"
+ *   message?: { role: string, content: string | ContentBlock[] }
+ *   sessionId?, cwd?, gitBranch?, version?
  */
 export class ClaudeSessionParser implements SessionParser {
   canParse(path: string): boolean {
     return (
-      path.endsWith('.json') &&
-      (path.includes('.claude/sessions') || path.includes('claude-code'))
+      path.endsWith('.jsonl') &&
+      (path.includes('.claude/projects') || path.includes('claude-code'))
     );
   }
 
   async parse(path: string, content: string): Promise<IndexingResult | null> {
     try {
-      const session = JSON.parse(content);
+      const lines = content.split('\n').filter((l) => l.trim());
+      if (lines.length === 0) return null;
 
-      const messageCount = Array.isArray(session.messages)
-        ? session.messages.length
-        : 0;
-      const lastMessage =
-        Array.isArray(session.messages) && messageCount > 0
-          ? session.messages[messageCount - 1].content
-          : 'No content';
+      const entries: any[] = [];
+      for (const line of lines) {
+        try {
+          entries.push(JSON.parse(line));
+        } catch {
+          // skip malformed lines
+        }
+      }
 
-      const firstUserMsg = Array.isArray(session.messages)
-        ? session.messages.find((m: any) => m.role === 'user')?.content
-        : '';
+      // Extract messages (user + assistant entries with message field)
+      const messages = entries.filter(
+        (e) =>
+          (e.type === 'user' || e.type === 'assistant') && e.message?.content
+      );
 
-      const summary = `Claude Session (${messageCount} msgs)\nIntent: ${typeof firstUserMsg === 'string' ? firstUserMsg.substring(0, 200) : 'Unknown'}\nLast context: ${typeof lastMessage === 'string' ? lastMessage.substring(0, 100) : '...'}`;
+      const messageCount = messages.length;
+      if (messageCount === 0) return null;
+
+      // Extract session metadata from first message entry
+      const firstEntry = entries.find((e) => e.sessionId);
+      const sessionId = firstEntry?.sessionId || 'unknown';
+      const cwd = firstEntry?.cwd || '';
+      const gitBranch = firstEntry?.gitBranch || '';
+
+      // Derive project name from cwd or file path
+      const project = cwd ? cwd.split('/').pop() : path.split('/').slice(-2, -1)[0] || 'unknown';
+
+      // Find first user message as intent
+      const firstUserMsg = messages.find((m) => m.type === 'user');
+      const firstUserContent = this.extractTextContent(
+        firstUserMsg?.message?.content
+      );
+
+      // Find last assistant text message
+      const lastAssistantMsg = [...messages]
+        .reverse()
+        .find(
+          (m) =>
+            m.type === 'assistant' &&
+            this.extractTextContent(m.message?.content)
+        );
+      const lastContext = this.extractTextContent(
+        lastAssistantMsg?.message?.content
+      );
+
+      const summary = `Claude Session (${messageCount} msgs)\nProject: ${project}${gitBranch ? ` [${gitBranch}]` : ''}\nIntent: ${firstUserContent ? firstUserContent.substring(0, 200) : 'Unknown'}\nLast context: ${lastContext ? lastContext.substring(0, 100) : '...'}`;
 
       return {
         summary,
         metadata: {
           type: 'claude-session',
           messageCount,
-          timestamp: session.updated_at || Date.now(),
+          sessionId,
+          project,
+          gitBranch,
+          timestamp: firstEntry?.timestamp
+            ? new Date(firstEntry.timestamp).getTime()
+            : Date.now(),
         },
         path,
       };
     } catch (e) {
       return null;
     }
+  }
+
+  /**
+   * Extract plain text from Claude message content.
+   * Content can be a string or an array of content blocks.
+   */
+  private extractTextContent(content: any): string {
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      const textBlock = content.find((b: any) => b.type === 'text');
+      return typeof textBlock?.text === 'string' ? textBlock.text : '';
+    }
+    return '';
   }
 }
 
@@ -234,21 +303,58 @@ export class CodexSessionParser implements SessionParser {
   }
 }
 
-export class IndexingService {
+export class IndexingService extends EventEmitter {
   private parsers: SessionParser[] = [];
   private llmService: LLMService | null = null;
+  private db: Database.Database | null = null;
+  private progressMap: Map<string, IndexingEvent> = new Map();
+  private recentEvents: IndexingEvent[] = [];
+  private static readonly MAX_RECENT_EVENTS = 200;
+  private insertEventStmt: Database.Statement | null = null;
 
   constructor(
     private store: MemoryStore,
     private embedder: EmbeddingService,
-    llmService?: LLMService
+    llmService?: LLMService,
+    db?: Database.Database
   ) {
+    super();
     this.llmService = llmService ?? null;
+    this.db = db ?? null;
+
+    // Prepare statement for inserting events
+    if (this.db) {
+      try {
+        this.insertEventStmt = this.db.prepare(`
+          INSERT INTO indexing_events (path, type, parser_type, summary, memory_id, error, timestamp)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+      } catch {
+        // Table might not exist yet in older databases
+        this.insertEventStmt = null;
+      }
+    }
+
     // Register all session parsers
     this.parsers.push(new ClaudeSessionParser());
     this.parsers.push(new OpenCodeSessionParser());
     this.parsers.push(new CursorSessionParser());
     this.parsers.push(new CodexSessionParser());
+  }
+
+  /**
+   * Set database connection for persisting indexing events
+   */
+  setDatabase(db: Database.Database): void {
+    this.db = db;
+    try {
+      this.insertEventStmt = this.db.prepare(`
+        INSERT INTO indexing_events (path, type, parser_type, summary, memory_id, error, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+    } catch {
+      this.insertEventStmt = null;
+    }
   }
 
   /**
@@ -265,7 +371,51 @@ export class IndexingService {
     this.llmService = llmService;
   }
 
-  async ingestFile(path: string): Promise<boolean> {
+  /**
+   * Get current progress for all tracked files
+   */
+  getProgress(): Map<string, IndexingEvent> {
+    return new Map(this.progressMap);
+  }
+
+  /**
+   * Get recent indexing events (newest first)
+   */
+  getRecentEvents(limit = 50): IndexingEvent[] {
+    return this.recentEvents.slice(-limit).reverse();
+  }
+
+  private emitEvent(event: IndexingEvent): void {
+    this.progressMap.set(event.path, event);
+    this.recentEvents.push(event);
+    if (this.recentEvents.length > IndexingService.MAX_RECENT_EVENTS) {
+      this.recentEvents = this.recentEvents.slice(-IndexingService.MAX_RECENT_EVENTS);
+    }
+
+    // Persist to database if available
+    if (this.insertEventStmt) {
+      try {
+        this.insertEventStmt.run(
+          event.path,
+          event.type,
+          event.parserType ?? null,
+          event.summary ?? null,
+          event.memoryId ?? null,
+          event.error ?? null,
+          event.timestamp
+        );
+      } catch (e) {
+        // Silently ignore DB errors to not block indexing
+        console.warn('[IndexingService] Failed to persist event:', e);
+      }
+    }
+
+    this.emit('indexing', event);
+  }
+
+  async ingestFile(path: string, event: 'add' | 'change' = 'add'): Promise<boolean> {
+    this.emitEvent({ type: 'start', path, timestamp: Date.now() });
+
     try {
       const content = await readFile(path, 'utf-8');
 
@@ -273,10 +423,14 @@ export class IndexingService {
         if (parser.canParse(path)) {
           const result = await parser.parse(path, content);
           if (result) {
+            this.emitEvent({
+              type: 'parsed',
+              path,
+              parserType: result.metadata.type,
+              timestamp: Date.now(),
+            });
+
             const existing = this.store.list({ source: path, limit: 1 });
-            if (existing.length > 0) {
-              return false;
-            }
 
             let finalSummary = result.summary;
 
@@ -302,7 +456,47 @@ export class IndexingService {
 
             const vector = await this.embedder.embed(finalSummary);
 
-            this.store.create(
+            this.emitEvent({
+              type: 'embedded',
+              path,
+              parserType: result.metadata.type,
+              timestamp: Date.now(),
+            });
+
+            if (existing.length > 0) {
+              if (event === 'change') {
+                // Update existing memory with latest session content
+                const existingMemory = existing[0]!;
+                this.store.update(
+                  existingMemory.id,
+                  {
+                    content: finalSummary,
+                    tags: ['session-index', result.metadata.type],
+                  },
+                  vector
+                );
+
+                this.emitEvent({
+                  type: 'stored',
+                  path,
+                  parserType: result.metadata.type,
+                  memoryId: existingMemory.id,
+                  summary: finalSummary.substring(0, 300),
+                  timestamp: Date.now(),
+                });
+                return true;
+              }
+              // Already indexed on 'add' — skip duplicate
+              this.emitEvent({
+                type: 'skipped',
+                path,
+                parserType: result.metadata.type,
+                timestamp: Date.now(),
+              });
+              return false;
+            }
+
+            const memory = this.store.create(
               {
                 content: finalSummary,
                 tags: ['session-index', result.metadata.type],
@@ -312,12 +506,28 @@ export class IndexingService {
               vector
             );
 
+            this.emitEvent({
+              type: 'stored',
+              path,
+              parserType: result.metadata.type,
+              memoryId: memory.id,
+              summary: finalSummary.substring(0, 300),
+              timestamp: Date.now(),
+            });
+
             return true;
           }
         }
       }
     } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : String(e);
       console.error(`Failed to ingest ${path}:`, e);
+      this.emitEvent({
+        type: 'error',
+        path,
+        error: errorMsg,
+        timestamp: Date.now(),
+      });
     }
     return false;
   }
@@ -326,6 +536,47 @@ export class IndexingService {
     content: string
   ): SessionMessage[] {
     try {
+      // Try JSONL format first (Claude Code sessions)
+      const lines = content.split('\n').filter((l) => l.trim());
+      if (lines.length > 1) {
+        const entries: any[] = [];
+        let isJsonl = false;
+        for (const line of lines) {
+          try {
+            entries.push(JSON.parse(line));
+            isJsonl = true;
+          } catch {
+            // not JSONL
+          }
+        }
+
+        if (isJsonl && entries.length > 0) {
+          return entries
+            .filter(
+              (e) =>
+                (e.type === 'user' || e.type === 'assistant') &&
+                e.message?.content
+            )
+            .slice(-20)
+            .map((e) => {
+              const role: 'user' | 'assistant' =
+                e.type === 'user' ? 'user' : 'assistant';
+              let text = '';
+              if (typeof e.message.content === 'string') {
+                text = e.message.content;
+              } else if (Array.isArray(e.message.content)) {
+                const textBlock = e.message.content.find(
+                  (b: any) => b.type === 'text'
+                );
+                text = textBlock?.text || '';
+              }
+              return { role, content: text.slice(0, 2000) };
+            })
+            .filter((m) => m.content.length > 0);
+        }
+      }
+
+      // Fall back to single JSON format (other session types)
       const session = JSON.parse(content);
       const messages = session.messages || session.conversation || [];
 
