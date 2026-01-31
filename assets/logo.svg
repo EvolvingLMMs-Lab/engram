@@ -1,8 +1,20 @@
-<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Black square with emerald border -->
-  <rect x="4" y="4" width="32" height="32" rx="4" fill="#000000" stroke="#10b981" stroke-opacity="0.6" stroke-width="1"/>
-  <!-- En text -->
-  <text x="20" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="700" fill="#34d399" text-anchor="middle">En</text>
-  <!-- ENGRAM text -->
-  <text x="52" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="400" letter-spacing="0.1em" fill="#18181b">ENGRAM</text>
+<svg width="450" height="100" viewBox="0 0 450 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="engram-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+    </defs>
+
+    <g id="icon">
+        <rect x="10" y="10" width="80" height="80" rx="16" fill="#0A0A0A" stroke="url(#engram-grad)" stroke-width="2"/>
+        
+        <path d="M10 30 H25 M75 30 H90 M10 70 H25 M75 70 H90 M30 10 V25 M70 10 V25 M30 90 V75 M70 90 V75" stroke="#10b981" stroke-width="1" opacity="0.3"/>
+
+        <text x="50" y="58" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="40" fill="url(#engram-grad)" text-anchor="middle" dominant-baseline="middle" letter-spacing="1">En</text>
+    </g>
+
+    <g id="wordmark">
+        <text x="120" y="60" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="42" fill="#18181b" letter-spacing="3">ENGRAM</text>
+    </g>
 </svg>
