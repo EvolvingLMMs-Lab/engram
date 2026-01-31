@@ -72,10 +72,16 @@ vi.mock('@engram/core', () => {
       createdAt: Date.now(),
     }),
     IndexingService: vi.fn().mockImplementation(() => ({})),
-    SessionWatcher: vi.fn().mockImplementation(() => ({
-      watch: vi.fn(),
-      close: vi.fn().mockResolvedValue(undefined),
-    })),
+    SessionWatcher: Object.assign(
+      vi.fn().mockImplementation(() => ({
+        watch: vi.fn(),
+        close: vi.fn().mockResolvedValue(undefined),
+      })),
+      {
+        getDefaultPaths: vi.fn().mockReturnValue(['/mock/.claude/projects', '/mock/.claude/plugins']),
+        getProjectPath: vi.fn().mockReturnValue('/mock/project/.claude'),
+      }
+    ),
     KeyManager: vi.fn().mockImplementation(() => ({})),
   };
 });

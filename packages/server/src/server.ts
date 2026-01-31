@@ -13,8 +13,7 @@ import {
   generateRecoveryKit,
   KeyManager,
 } from '@engram/core';
-import { join } from 'path';
-import { homedir } from 'os';
+import { existsSync } from 'fs';
 
 export interface EngramServerConfig {
   dbPath?: string;
@@ -88,9 +87,16 @@ export function createEngramServer(
   const indexer = new IndexingService(store, embedder, undefined, db);
   const watcher = new SessionWatcher(indexer);
 
-  // Start watching Claude Code sessions (stored as JSONL in ~/.claude/projects/)
-  const claudeProjectsPath = join(homedir(), '.claude', 'projects');
-  watcher.watch([claudeProjectsPath]);
+  // Get current working directory for project-scoped memories
+  const cwd = process.cwd();
+
+  // Start watching: global paths + project-level .claude directory
+  const watchPaths = [...SessionWatcher.getDefaultPaths()];
+  const projectClaudePath = SessionWatcher.getProjectPath(cwd);
+  if (existsSync(projectClaudePath)) {
+    watchPaths.push(projectClaudePath);
+  }
+  watcher.watch(watchPaths);
 
   server.tool(
     'mcp_get_secret',
@@ -189,7 +195,8 @@ export function createEngramServer(
     async ({ query, limit }) => {
       try {
         const queryVector = await embedder.embed(query);
-        const results = store.search(queryVector, limit);
+        // Pass projectPath for scope filtering (project-scoped memories only visible in their project)
+        const results = store.search(queryVector, limit, { projectPath: cwd });
 
         if (results.length === 0) {
           return {
@@ -347,7 +354,8 @@ export function createEngramServer(
       try {
         const queryVector = await embedder.embed(intent);
 
-        const results = store.search(queryVector, limit * 2); // Fetch more to filter
+        // Pass projectPath for scope filtering
+        const results = store.search(queryVector, limit * 2, { projectPath: cwd });
 
         const sessionResults = results
           .filter((r) => r.memory.tags.includes('session-index'))

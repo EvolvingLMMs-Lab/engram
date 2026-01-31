@@ -5,6 +5,7 @@ import type { MemoryStore } from '../memory/store.js';
 import type { EmbeddingService } from '../embedding/service.js';
 import { LLMService } from '../llm/service.js';
 import type { SessionMessage, EngramAbstract } from '../llm/service.js';
+import { SkillAgentParser } from './skillAgentParser.js';
 
 export interface IndexingResult {
   summary: string;
@@ -340,6 +341,7 @@ export class IndexingService extends EventEmitter {
     this.parsers.push(new OpenCodeSessionParser());
     this.parsers.push(new CursorSessionParser());
     this.parsers.push(new CodexSessionParser());
+    this.parsers.push(new SkillAgentParser());
   }
 
   /**

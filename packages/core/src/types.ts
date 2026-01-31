@@ -103,3 +103,20 @@ export const DEFAULT_CONFIG: Partial<EngramConfig> = {
   embeddingModel: 'Xenova/all-MiniLM-L6-v2',
   vectorDimensions: 384,
 };
+
+/**
+ * Memory scope for access control
+ * - 'global': Accessible from any project (e.g., global plugins)
+ * - 'project': Only accessible from the specific project
+ */
+export type MemoryScope = 'global' | 'project';
+
+/**
+ * Search options for memory queries
+ */
+export interface SearchOptions {
+  /** Maximum number of results to return */
+  limit?: number;
+  /** Project path for filtering project-scoped memories */
+  projectPath?: string;
+}

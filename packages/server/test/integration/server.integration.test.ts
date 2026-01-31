@@ -31,10 +31,16 @@ vi.mock('@engram/core', async (importOriginal) => {
   return {
     ...actual,
     // Only mock SessionWatcher to avoid filesystem side effects
-    SessionWatcher: vi.fn().mockImplementation(() => ({
-      watch: vi.fn(),
-      close: vi.fn().mockResolvedValue(undefined),
-    })),
+    SessionWatcher: Object.assign(
+      vi.fn().mockImplementation(() => ({
+        watch: vi.fn(),
+        close: vi.fn().mockResolvedValue(undefined),
+      })),
+      {
+        getDefaultPaths: vi.fn().mockReturnValue(['/mock/.claude/projects', '/mock/.claude/plugins']),
+        getProjectPath: vi.fn().mockReturnValue('/mock/project/.claude'),
+      }
+    ),
     // IndexingService requires LLMService which we don't need for integration tests
     IndexingService: vi.fn().mockImplementation(() => ({})),
   };
