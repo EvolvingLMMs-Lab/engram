@@ -2,7 +2,7 @@
   "name": "@engram/core",
   "version": "0.0.1",
   "description": "Core library for Engram - sqlite-vec, embeddings, crypto primitives, sync engine",
-  "license": "MIT",
+  "license": "Polyform-Noncommercial-1.0.0",
   "author": "Engram Team",
   "homepage": "https://github.com/engram-labs/engram",
   "repository": {

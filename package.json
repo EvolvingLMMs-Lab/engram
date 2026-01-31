@@ -18,7 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/EvolvingLMMs-Lab/engram.git"
   },
-  "license": "MIT",
+  "license": "Polyform-Noncommercial-1.0.0",
   "author": "Engram Team",
   "type": "module",
   "workspaces": [
