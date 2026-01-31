@@ -65,6 +65,7 @@ module.exports = {
     'dist',
     'node_modules',
     'coverage',
+    'packages/web',
     '*.js',
     '*.cjs',
     '*.mjs',
