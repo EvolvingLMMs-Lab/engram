@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <code>MEMORY</code> for AI · <code>PRIVACY</code> by design
+  <b>MEMORY</b> for AI · <b>PRIVACY</b> by design
 </p>
 
 <p align="center">
