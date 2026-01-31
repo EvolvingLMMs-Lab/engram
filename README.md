@@ -36,9 +36,9 @@ Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Curso
 
 Think of it as Signal for AI memory - your data never leaves your device in plaintext.
 
-<!-- TODO: Add demo GIF here -->
-<!-- ![Demo](assets/demo.gif) -->
-<!-- Show: engram init → Claude conversation using mcp_save_memory → later session using mcp_read_memory -->
+<p align="center">
+  <img src="assets/demo.gif" alt="Engram Demo" width="600">
+</p>
 
 ## Quick Start
 
@@ -168,73 +168,17 @@ Claude: [calls mcp_read_memory]
 
 ## Architecture
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│                          AI CLIENTS                           │
-│                                                               │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│   │   Claude    │    │   Cursor    │    │   Claude    │      │
-│   │   Desktop   │    │             │    │    Code     │      │
-│   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘      │
-│          │                  │                  │              │
-│          └──────────────────┼──────────────────┘              │
-│                             │                                 │
-│                             ▼                                 │
-│                  ┌────────────────────┐                       │
-│                  │    MCP Protocol    │                       │
-│                  └─────────┬──────────┘                       │
-│                            │                                  │
-└────────────────────────────┼──────────────────────────────────┘
-                             │
-                             ▼
-┌───────────────────────────────────────────────────────────────┐
-│                        ENGRAM SERVER                          │
-│                                                               │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│   │   Memory    │    │   Secrets   │    │   Session   │      │
-│   │   Store     │    │   Vault     │    │   Indexer   │      │
-│   └─────────────┘    └─────────────┘    └─────────────┘      │
-│                                                               │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│   │  Embedding  │    │    DLP      │    │   Skill     │      │
-│   │   Service   │    │  Sanitizer  │    │   Parser    │      │
-│   └─────────────┘    └─────────────┘    └─────────────┘      │
-│                                                               │
-└────────────────────────────┬──────────────────────────────────┘
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │       SQLite        │
-                  │     ~/.engram/      │
-                  │   + sqlite-vec      │
-                  │                     │
-                  │     LOCAL-FIRST     │
-                  │   Your data stays   │
-                  │     on YOUR disk    │
-                  └─────────────────────┘
-```
+<p align="center">
+  <img src="assets/Arch.png" alt="Engram Architecture" width="800">
+</p>
 
 ## Security
 
 ### Encryption Flow
 
-```
-┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-│  Master Key   │       │   AES-256     │       │   Encrypted   │
-│  (Keychain)   │──────►│     GCM       │──────►│   SQLite DB   │
-└───────────────┘       └───────────────┘       └───────────────┘
-        │
-        │ derived via PBKDF2-SHA256
-        │ (600k iterations)
-        ▼
-┌───────────────┐
-│  BIP39 Seed   │
-│  (24 words)   │
-│               │
-│  Write this   │
-│  down.        │
-└───────────────┘
-```
+<p align="center">
+  <img src="assets/Encryption.png" alt="Encryption Flow" width="800">
+</p>
 
 ### Encryption Stack
 
