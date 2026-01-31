@@ -1,18 +1,8 @@
 <p align="center">
-
-```
-███████╗███╗   ██╗ ██████╗ ██████╗  █████╗ ███╗   ███╗
-██╔════╝████╗  ██║██╔════╝ ██╔══██╗██╔══██╗████╗ ████║
-█████╗  ██╔██╗ ██║██║  ███╗██████╔╝███████║██╔████╔██║
-██╔══╝  ██║╚██╗██║██║   ██║██╔══██╗██╔══██║██║╚██╔╝██║
-███████╗██║ ╚████║╚██████╔╝██║  ██║██║  ██║██║ ╚═╝ ██║
-╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
-```
-
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg" width="180" alt="Engram">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg" height="18" alt="Engram" align="absmiddle">
   <strong>Local memory for your AI. Encrypted. Yours.</strong>
 </p>
 
