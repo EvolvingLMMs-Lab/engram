@@ -35,6 +35,8 @@ An **end-to-end encrypted** memory layer for AI assistants.
 
 **ZERO-KNOWLEDGE SYNC** - Need multi-device? Opt-in sync encrypts everything client-side. We only see ciphertext. Like Signal, but for AI memory.
 
+**OPEN SOURCE** - Don't trust us. Verify. Audit the code. Self-host if you want. Fork if we disappear.
+
 Works with Claude Desktop, Claude Code, Cursor, and any MCP-compatible client.
 
 ## Quick Start
@@ -55,10 +57,51 @@ Restart your AI client. It remembers you now.
 |---------|-------------|
 | **Local by Default** | Your data stays on your device. No cloud required. |
 | **E2E Encryption** | AES-256-GCM. Keys never leave your device. |
+| **Open Source** | Audit the code. Self-host. Fork if we disappear. |
 | **Semantic Memory** | Vector similarity search across all your sessions |
 | **Secrets Vault** | Encrypted storage for API keys and credentials |
-| **Session Search** | Find and resume past coding sessions instantly |
 | **Zero-Knowledge Sync** | Optional. Client-side encryption. We only see ciphertext. |
+
+## Architecture
+
+```
++---------------------------------------------------------------+
+|                          AI CLIENTS                           |
+|                                                               |
+|   +-------------+    +-------------+    +-------------+       |
+|   |   Claude    |    |   Cursor    |    |   Claude    |       |
+|   |   Desktop   |    |             |    |    Code     |       |
+|   +------+------+    +------+------+    +------+------+       |
+|          |                  |                  |               |
+|          +------------------+------------------+               |
+|                             |                                  |
+|                             v                                  |
+|                  +--------------------+                        |
+|                  |    MCP Protocol    |                        |
+|                  +---------+----------+                        |
+|                            |                                   |
++----------------------------+-----------------------------------+
+                             |
+                             v
++---------------------------------------------------------------+
+|                        ENGRAM SERVER                          |
+|                                                               |
+|   +-------------+    +-------------+    +-------------+       |
+|   |   Memory    |    |   Secrets   |    |   Session   |       |
+|   |   Store     |    |   Vault     |    |   Watcher   |       |
+|   +-------------+    +-------------+    +-------------+       |
+|                                                               |
++----------------------------+----------------------------------+
+                             |
+                             v
+                  +---------------------+
+                  |       SQLite        |
+                  |     ~/.engram/      |
+                  |                     |
+                  |   Your data stays   |
+                  |     on YOUR disk    |
+                  +---------------------+
+```
 
 ## Security
 
@@ -78,6 +121,7 @@ All encryption uses `node:crypto` (OpenSSL). No custom cryptography.
 | Where's your data?  | Your device (default) | Their servers |
 | Who holds the keys? | You | They do |
 | Can they read it?   | No | Yes |
+| Can you verify?     | Yes (open source) | No |
 | Cross-app           | Any MCP client | Locked to one app |
 
 ## Philosophy
