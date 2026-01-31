@@ -29,9 +29,11 @@
 
 An **end-to-end encrypted** memory layer for AI assistants.
 
-**YOU HOLD THE KEYS** - AES-256-GCM encryption. Keys never leave your device. 24-word recovery phrase, like a crypto wallet.
+**LOCAL BY DEFAULT** - Your data lives on your device. No cloud, no servers, no sync unless you ask for it.
 
-**ZERO-KNOWLEDGE SYNC** - Sync across devices if you want. Server only sees ciphertext. We can't read your data. Ever.
+**ENCRYPTED ALWAYS** - AES-256-GCM. Keys never leave your device. 24-word recovery phrase, like a crypto wallet.
+
+**ZERO-KNOWLEDGE SYNC** - Need multi-device? Opt-in sync encrypts everything client-side. We only see ciphertext. Like Signal, but for AI memory.
 
 Works with Claude Desktop, Claude Code, Cursor, and any MCP-compatible client.
 
@@ -51,12 +53,12 @@ Restart your AI client. It remembers you now.
 
 | Feature | Description |
 |---------|-------------|
-| **Semantic Memory** | Vector similarity search across all your past sessions |
+| **Local by Default** | Your data stays on your device. No cloud required. |
 | **E2E Encryption** | AES-256-GCM. Keys never leave your device. |
+| **Semantic Memory** | Vector similarity search across all your sessions |
 | **Secrets Vault** | Encrypted storage for API keys and credentials |
 | **Session Search** | Find and resume past coding sessions instantly |
-| **Zero-Knowledge Sync** | Sync across devices. Server sees only ciphertext. |
-| **Offline Mode** | Works without internet. Your data, your control. |
+| **Zero-Knowledge Sync** | Optional. Client-side encryption. We only see ciphertext. |
 
 ## Security
 
@@ -73,10 +75,10 @@ All encryption uses `node:crypto` (OpenSSL). No custom cryptography.
 
 |                     | Engram | Cloud Memory |
 |---------------------|:------:|:------------:|
+| Where's your data?  | Your device (default) | Their servers |
 | Who holds the keys? | You | They do |
 | Can they read it?   | No | Yes |
 | Cross-app           | Any MCP client | Locked to one app |
-| Open source         | Yes | No |
 
 ## Philosophy
 
