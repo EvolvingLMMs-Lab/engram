@@ -1,10 +1,16 @@
-import { readFile } from 'node:fs/promises';
 import { EventEmitter } from 'node:events';
+import { readFile } from 'node:fs/promises';
+
 import type Database from 'better-sqlite3';
-import type { MemoryStore } from '../memory/store.js';
+
 import type { EmbeddingService } from '../embedding/service.js';
-import { LLMService } from '../llm/service.js';
-import type { SessionMessage, EngramAbstract } from '../llm/service.js';
+import type {
+  EngramAbstract,
+  LLMService,
+  SessionMessage,
+} from '../llm/service.js';
+import type { MemoryStore } from '../memory/store.js';
+
 import { SkillAgentParser } from './skillAgentParser.js';
 
 export interface IndexingResult {
@@ -75,7 +81,9 @@ export class ClaudeSessionParser implements SessionParser {
       const gitBranch = firstEntry?.gitBranch || '';
 
       // Derive project name from cwd or file path
-      const project = cwd ? cwd.split('/').pop() : path.split('/').slice(-2, -1)[0] || 'unknown';
+      const project = cwd
+        ? cwd.split('/').pop()
+        : path.split('/').slice(-2, -1)[0] || 'unknown';
 
       // Find first user message as intent
       const firstUserMsg = messages.find((m) => m.type === 'user');
@@ -391,7 +399,9 @@ export class IndexingService extends EventEmitter {
     this.progressMap.set(event.path, event);
     this.recentEvents.push(event);
     if (this.recentEvents.length > IndexingService.MAX_RECENT_EVENTS) {
-      this.recentEvents = this.recentEvents.slice(-IndexingService.MAX_RECENT_EVENTS);
+      this.recentEvents = this.recentEvents.slice(
+        -IndexingService.MAX_RECENT_EVENTS
+      );
     }
 
     // Persist to database if available
@@ -415,7 +425,10 @@ export class IndexingService extends EventEmitter {
     this.emit('indexing', event);
   }
 
-  async ingestFile(path: string, event: 'add' | 'change' = 'add'): Promise<boolean> {
+  async ingestFile(
+    path: string,
+    event: 'add' | 'change' = 'add'
+  ): Promise<boolean> {
     this.emitEvent({ type: 'start', path, timestamp: Date.now() });
 
     try {
@@ -440,9 +453,8 @@ export class IndexingService extends EventEmitter {
               try {
                 const messages = this.extractMessagesForLLM(content);
                 if (messages.length > 0) {
-                  const abstract = await this.llmService.summarizeSession(
-                    messages
-                  );
+                  const abstract =
+                    await this.llmService.summarizeSession(messages);
                   finalSummary = this.formatEngramAbstract(
                     abstract,
                     result.metadata
@@ -534,9 +546,7 @@ export class IndexingService extends EventEmitter {
     return false;
   }
 
-  private extractMessagesForLLM(
-    content: string
-  ): SessionMessage[] {
+  private extractMessagesForLLM(content: string): SessionMessage[] {
     try {
       // Try JSONL format first (Claude Code sessions)
       const lines = content.split('\n').filter((l) => l.trim());
@@ -603,9 +613,7 @@ export class IndexingService extends EventEmitter {
     abstract: EngramAbstract,
     metadata: Record<string, any>
   ): string {
-    const keyPointsList = abstract.keyPoints
-      .map((p) => `- ${p}`)
-      .join('\n');
+    const keyPointsList = abstract.keyPoints.map((p) => `- ${p}`).join('\n');
     return `## Engram Abstract
 
 **${abstract.title}**

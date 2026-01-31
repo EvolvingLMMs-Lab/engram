@@ -1,8 +1,9 @@
+import { existsSync, mkdirSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
+
 import Database from 'better-sqlite3';
 import * as sqliteVec from 'sqlite-vec';
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { homedir } from 'node:os';
 
 import type { EngramConfig } from '../types.js';
 

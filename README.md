@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Biological memory fades. Digital memory leaks. We fixed both.</strong>
+  <strong>Local memory for your AI. Encrypted. Yours.</strong>
 </p>
 
 <p align="center">
@@ -15,26 +15,19 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#features">Features</a> •
-  <a href="#the-problem">Why</a> •
-  <a href="#architecture">Architecture</a> •
+  <a href="#how-it-works">How It Works</a> •
   <a href="#security">Security</a>
 </p>
 
 ---
 
-Every conversation with your AI starts from zero.
+I got tired of explaining my coding preferences to Claude every new session. "Yes, I like TypeScript. Yes, functional style. Yes, Zod for validation. We've been over this."
 
-You explain your preferences. Again.
+So I built Engram - a memory layer that lives on your machine, encrypts everything locally, and lets your AI actually remember you.
 
-You paste your API keys. Again.
+One command, and Claude/Cursor/any MCP client can save and recall facts across sessions. Your API keys stay in an encrypted vault. Your past coding sessions become searchable.
 
-You describe your project. Again.
-
-The AI industry solved intelligence. It forgot about memory.
-
-Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Cursor, and any MCP-compatible AI.
-
-Think of it as Signal for AI memory - your data never leaves your device in plaintext.
+No cloud storage. Just SQLite on your disk. (Encrypted sync across your own devices? Coming soon.)
 
 ## Demo
 
@@ -69,19 +62,17 @@ Restart your AI client. It remembers you now.
 | 🔑 | **Secrets Vault** | Store API keys securely with encrypted sync |
 | 📂 | **Session Indexing** | Automatically index and search past Claude Code sessions |
 | 🛠️ | **Skill Discovery** | Index and search Claude Code skills/agents/commands |
-| 🔄 | **Multi-Device Sync** | Encrypted sync across devices with Shamir recovery |
+| 🔄 | **Multi-Device Sync** | Zero-knowledge sync - server sees only ciphertext |
 | 🏠 | **Local-First** | Works offline, your data stays on your disk |
 
-## The Problem
+## Why Local?
 
-AI assistants have a peculiar form of amnesia. They can write poetry, debug code, explain quantum mechanics - but they cannot remember that you prefer tabs over spaces.
+Look, ChatGPT and Claude have memory features now. But:
+- Your data lives on their servers
+- You can't search your old sessions
+- Switch apps? Start over.
 
-This is not a technical limitation. It is a product decision. Cloud-based memory means:
-- Your private thoughts live on someone else's server
-- Your API keys travel across the internet
-- Your context disappears when you switch apps
-
-We rejected this tradeoff.
+Engram keeps everything on your machine. You can `cat` the database if you want. It's just SQLite.
 
 ## How It Works
 
@@ -185,6 +176,29 @@ Claude: [calls mcp_read_memory]
 
 All crypto uses `node:crypto` (OpenSSL). No custom cryptography.
 
+### Zero-Knowledge Sync (Coming Soon)
+
+When you enable sync, your data passes through our server - but we can't read it.
+
+```
+Your Device                    Our Server                    Your Other Device
+     │                              │                              │
+     │  1. Encrypt with vault_key   │                              │
+     │  ─────────────────────────►  │                              │
+     │     (ciphertext only)        │  2. Store encrypted blob     │
+     │                              │  ─────────────────────────►  │
+     │                              │     (still ciphertext)       │
+     │                              │                              │
+     │                              │  3. Decrypt with vault_key   │
+     │                              │  ◄─────────────────────────  │
+```
+
+**What we store:** `{ encrypted_blob, iv, blind_index, device_id }`
+
+**What we can't do:** Decrypt anything. We don't have your vault key. Ever.
+
+New device authorization works like Signal - the existing device encrypts your vault key with the new device's public key. We just pass the envelope.
+
 ### Data Privacy
 
 | Data Type | Local Storage | Sync (if enabled) |
@@ -226,37 +240,32 @@ pnpm build
 pnpm test
 ```
 
-## Why Not Claude Projects / ChatGPT Memory?
+## Comparison
 
-|                     | Engram | ChatGPT Memory | Claude Projects |
-|---------------------|:------:|:--------------:|:---------------:|
-| Local-first         | ✅ | ❌ Cloud only | ❌ Cloud only |
-| E2E Encrypted       | ✅ | ❌ | ❌ |
-| Cross-app           | ✅ Any MCP | ❌ ChatGPT only | ❌ Claude only |
-| Session Indexing    | ✅ | ❌ | ❌ |
-| Skill Discovery     | ✅ | ❌ | ❌ |
-| Self-hostable       | ✅ | ❌ | ❌ |
-| Open source         | ✅ | ❌ | ❌ |
+|                     | Engram | Cloud Memory (ChatGPT/Claude) |
+|---------------------|:------:|:-----------------------------:|
+| Where's your data?  | Your disk | Their servers |
+| Encryption          | E2E, keys never leave | They can read it |
+| Works across apps   | Any MCP client | Locked to one app |
+| Search old sessions | ✅ | Nope |
+| Open source         | ✅ | Nope |
 
 ## FAQ
 
 **What if I lose my device?**
-During `engram init`, you receive a 24-word recovery phrase. Write it down.
+You get a 24-word recovery phrase during init. Write it down somewhere safe.
 
-**Can you read my memories?**
-No. Everything is encrypted locally. We have no server, no cloud, no access.
+**Can you read my data?**
+Nope. No server, no cloud, no access. It's all local.
 
-**Does this work offline?**
-Yes. It's local-first. No internet required.
+**Offline?**
+Yep.
 
-**What if Engram shuts down?**
-Export anytime with `engram export`. It's just SQLite.
+**What if Engram dies?**
+`engram export` → JSON. Or just copy the SQLite file. It's your data.
 
-**Are my API keys safe?**
-Yes. Secrets are encrypted with AES-256-GCM. Keys are stored in your system keychain (macOS Keychain, Windows Credential Vault, or Linux Secret Service).
-
-**Does it index all my Claude Code sessions?**
-Yes. Engram watches `~/.claude/projects/` and indexes sessions automatically when the server runs.
+**API keys safe?**
+AES-256-GCM encrypted, stored in your system keychain.
 
 ---
 
@@ -265,5 +274,6 @@ MIT License
 </p>
 
 <p align="center">
-<strong>Your AI should remember you. Not the other way around.</strong>
+Built by someone who got mass-amnesia'd by Claude one too many times.<br>
+If you find bugs, that's just more memories for Engram to help you fix next time.
 </p>

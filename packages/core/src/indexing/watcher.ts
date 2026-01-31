@@ -1,7 +1,9 @@
-import { FSWatcher } from 'chokidar';
-import chokidar from 'chokidar';
-import { basename, join } from 'node:path';
 import { homedir } from 'node:os';
+import { basename, join } from 'node:path';
+
+import type { FSWatcher } from 'chokidar';
+import chokidar from 'chokidar';
+
 import type { IndexingService } from './service.js';
 
 export class SessionWatcher {
@@ -33,7 +35,7 @@ export class SessionWatcher {
    */
   watch(paths: string[]): void {
     if (this.watcher) {
-      this.watcher.close();
+      void this.watcher.close();
     }
 
     this.watchedPaths = new Set(paths);
@@ -47,8 +49,8 @@ export class SessionWatcher {
     });
 
     this.watcher
-      .on('add', (path: string) => this.handleFile(path, 'add'))
-      .on('change', (path: string) => this.handleFile(path, 'change'));
+      .on('add', (path: string) => void this.handleFile(path, 'add'))
+      .on('change', (path: string) => void this.handleFile(path, 'change'));
 
     console.log(`[Watcher] Started on: ${paths.join(', ')}`);
   }

@@ -1,5 +1,6 @@
-import type { SessionParser, IndexingResult } from './service.js';
 import type { MemoryScope } from '../types.js';
+
+import type { IndexingResult, SessionParser } from './service.js';
 
 /**
  * Frontmatter fields for skill/agent/command definitions
@@ -40,20 +41,22 @@ export class SkillAgentParser implements SessionParser {
     if (path.includes('/skills/') && path.endsWith('SKILL.md')) return true;
 
     // Match agent files (*.md in agents directory)
-    if (path.includes('/agents/') && !path.includes('/references/')) return true;
+    if (path.includes('/agents/') && !path.includes('/references/'))
+      return true;
 
     // Match command files (*.md in commands directory)
-    if (path.includes('/commands/') && !path.includes('/references/')) return true;
+    if (path.includes('/commands/') && !path.includes('/references/'))
+      return true;
 
     return false;
   }
 
-  async parse(path: string, content: string): Promise<IndexingResult | null> {
+  parse(path: string, content: string): Promise<IndexingResult | null> {
     try {
       const { frontmatter, body } = this.parseMarkdownWithFrontmatter(content);
 
       // Need at least a description to be useful
-      if (!frontmatter?.description) return null;
+      if (!frontmatter?.description) return Promise.resolve(null);
 
       const type = this.detectType(path);
       const name = frontmatter.name || this.extractNameFromPath(path, type);
@@ -61,7 +64,7 @@ export class SkillAgentParser implements SessionParser {
       const { scope, projectPath } = this.detectScope(path);
       const summary = this.buildSummary(type, name, frontmatter, body, plugin);
 
-      return {
+      return Promise.resolve({
         summary,
         metadata: {
           type: `claude-${type}`,
@@ -83,9 +86,9 @@ export class SkillAgentParser implements SessionParser {
           timestamp: Date.now(),
         },
         path,
-      };
+      });
     } catch {
-      return null;
+      return Promise.resolve(null);
     }
   }
 

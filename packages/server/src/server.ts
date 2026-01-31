@@ -1,19 +1,19 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import { existsSync } from 'node:fs';
 
 import {
-  MemoryStore,
-  initDatabase,
-  EmbeddingService,
-  SecretStore,
   CryptoService,
-  IndexingService,
-  SessionWatcher,
-  SecretsSyncEngine,
+  EmbeddingService,
   generateRecoveryKit,
+  IndexingService,
+  initDatabase,
   KeyManager,
+  MemoryStore,
+  SecretsSyncEngine,
+  SecretStore,
+  SessionWatcher,
 } from '@engram/core';
-import { existsSync } from 'fs';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
 
 export interface EngramServerConfig {
   dbPath?: string;
@@ -355,7 +355,9 @@ export function createEngramServer(
         const queryVector = await embedder.embed(intent);
 
         // Pass projectPath for scope filtering
-        const results = store.search(queryVector, limit * 2, { projectPath: cwd });
+        const results = store.search(queryVector, limit * 2, {
+          projectPath: cwd,
+        });
 
         const sessionResults = results
           .filter((r) => r.memory.tags.includes('session-index'))
@@ -401,25 +403,50 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
     {
       key: z.string().describe('The key name (e.g. STRIPE_API_KEY)'),
       value: z.string().describe('The secret value to store'),
-      description: z.string().optional().describe('Optional description of the secret'),
+      description: z
+        .string()
+        .optional()
+        .describe('Optional description of the secret'),
     },
-    async ({ key, value, description }: { key: string; value: string; description?: string }) => {
+    async ({
+      key,
+      value,
+      description,
+    }: {
+      key: string;
+      value: string;
+      description?: string;
+    }) => {
       if (!secretStore) {
         return {
-          content: [{ type: 'text', text: 'Error: Secrets vault is not initialized.' }],
+          content: [
+            { type: 'text', text: 'Error: Secrets vault is not initialized.' },
+          ],
           isError: true,
         };
       }
 
       try {
         await secretStore.set(key, value, description);
-        const syncStatus = secretStore.isSyncEnabled() ? ' (synced)' : ' (local only)';
+        const syncStatus = secretStore.isSyncEnabled()
+          ? ' (synced)'
+          : ' (local only)';
         return {
-          content: [{ type: 'text', text: `Secret '${key}' stored successfully${syncStatus}.` }],
+          content: [
+            {
+              type: 'text',
+              text: `Secret '${key}' stored successfully${syncStatus}.`,
+            },
+          ],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Failed to store secret: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [
+            {
+              type: 'text',
+              text: `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -433,10 +460,18 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
       device_id: z.string().describe('Unique identifier for the device'),
       device_public_key: z.string().describe('RSA public key in PEM format'),
     },
-    async ({ device_id, device_public_key }: { device_id: string; device_public_key: string }) => {
+    async ({
+      device_id,
+      device_public_key,
+    }: {
+      device_id: string;
+      device_public_key: string;
+    }) => {
       if (!secretsSyncEngine) {
         return {
-          content: [{ type: 'text', text: 'Error: Sync engine not initialized.' }],
+          content: [
+            { type: 'text', text: 'Error: Sync engine not initialized.' },
+          ],
           isError: true,
         };
       }
@@ -445,11 +480,21 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
         await secretsSyncEngine.connect();
         await secretsSyncEngine.authorizeDevice(device_id, device_public_key);
         return {
-          content: [{ type: 'text', text: `Device '${device_id}' authorized for vault access.` }],
+          content: [
+            {
+              type: 'text',
+              text: `Device '${device_id}' authorized for vault access.`,
+            },
+          ],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Failed to authorize device: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [
+            {
+              type: 'text',
+              text: `Failed to authorize device: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -477,20 +522,36 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
           throw new Error(`Failed to list devices: ${res.status}`);
         }
 
-        const data = (await res.json()) as { devices: Array<{ id: string; name?: string; createdAt: number }> };
+        const data = (await res.json()) as {
+          devices: Array<{ id: string; name?: string; createdAt: number }>;
+        };
 
         if (data.devices.length === 0) {
-          return { content: [{ type: 'text', text: 'No devices authorized.' }] };
+          return {
+            content: [{ type: 'text', text: 'No devices authorized.' }],
+          };
         }
 
         const formatted = data.devices
-          .map((d, i) => `${i + 1}. ${d.name || d.id} (added ${new Date(d.createdAt).toLocaleDateString()})`)
+          .map(
+            (d, i) =>
+              `${i + 1}. ${d.name || d.id} (added ${new Date(d.createdAt).toLocaleDateString()})`
+          )
           .join('\n');
 
-        return { content: [{ type: 'text', text: `Authorized devices:\n${formatted}` }] };
+        return {
+          content: [
+            { type: 'text', text: `Authorized devices:\n${formatted}` },
+          ],
+        };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Failed to list devices: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [
+            {
+              type: 'text',
+              text: `Failed to list devices: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -499,14 +560,16 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
 
   server.tool(
     'mcp_revoke_device',
-    'Revoke a device\'s access to the vault.',
+    "Revoke a device's access to the vault.",
     {
       device_id: z.string().describe('The device ID to revoke'),
     },
     async ({ device_id }: { device_id: string }) => {
       if (!secretsSyncEngine) {
         return {
-          content: [{ type: 'text', text: 'Error: Sync engine not initialized.' }],
+          content: [
+            { type: 'text', text: 'Error: Sync engine not initialized.' },
+          ],
           isError: true,
         };
       }
@@ -515,11 +578,18 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
         await secretsSyncEngine.connect();
         await secretsSyncEngine.revokeDevice(device_id);
         return {
-          content: [{ type: 'text', text: `Device '${device_id}' access revoked.` }],
+          content: [
+            { type: 'text', text: `Device '${device_id}' access revoked.` },
+          ],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Failed to revoke device: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [
+            {
+              type: 'text',
+              text: `Failed to revoke device: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -530,8 +600,16 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
     'mcp_create_recovery_kit',
     'Generate a Shamir secret sharing recovery kit for vault key backup.',
     {
-      shares: z.number().optional().default(5).describe('Total number of shares to create'),
-      threshold: z.number().optional().default(3).describe('Minimum shares needed to recover'),
+      shares: z
+        .number()
+        .optional()
+        .default(5)
+        .describe('Total number of shares to create'),
+      threshold: z
+        .number()
+        .optional()
+        .default(3)
+        .describe('Minimum shares needed to recover'),
     },
     async ({ shares, threshold }: { shares: number; threshold: number }) => {
       if (!config.vaultKey) {
@@ -542,21 +620,33 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
       }
 
       try {
-        const kit = await generateRecoveryKit(config.vaultKey, 'user', shares, threshold);
+        const kit = await generateRecoveryKit(
+          config.vaultKey,
+          'user',
+          shares,
+          threshold
+        );
 
         const sharesList = kit.shares
           .map((s) => `Share ${s.index + 1}: ${s.data.substring(0, 20)}...`)
           .join('\n');
 
         return {
-          content: [{
-            type: 'text',
-            text: `Recovery kit created (${threshold}-of-${shares}):\n\n${sharesList}\n\nIMPORTANT: Store these shares in separate secure locations. You need ${threshold} shares to recover your vault.`,
-          }],
+          content: [
+            {
+              type: 'text',
+              text: `Recovery kit created (${threshold}-of-${shares}):\n\n${sharesList}\n\nIMPORTANT: Store these shares in separate secure locations. You need ${threshold} shares to recover your vault.`,
+            },
+          ],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Failed to create recovery kit: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [
+            {
+              type: 'text',
+              text: `Failed to create recovery kit: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }

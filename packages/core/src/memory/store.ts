@@ -1,17 +1,17 @@
 import type Database from 'better-sqlite3';
 import { v7 as uuidv7 } from 'uuid';
 
+import { CryptoService } from '../crypto/service.js';
+import { DLPSanitizer } from '../security/dlp.js';
 import type {
-  Memory,
   CreateMemoryInput,
+  EncryptedData,
+  Memory,
+  SearchOptions,
   SearchResult,
   SyncEvent,
   SyncEventType,
-  EncryptedData,
-  SearchOptions,
 } from '../types.js';
-import { DLPSanitizer } from '../security/dlp.js';
-import { CryptoService } from '../crypto/service.js';
 
 export class MemoryStore {
   private db: Database.Database;

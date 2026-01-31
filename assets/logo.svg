@@ -4,5 +4,5 @@
   <!-- En text -->
   <text x="20" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="700" fill="#34d399" text-anchor="middle">En</text>
   <!-- ENGRAM text -->
-  <text x="52" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="400" letter-spacing="0.1em" fill="#e4e4e7">ENGRAM</text>
+  <text x="52" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="400" letter-spacing="0.1em" fill="#18181b">ENGRAM</text>
 </svg>
