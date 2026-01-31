@@ -1,13 +1,9 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg?v=4" width="420" alt="Engram">
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg?v=5" width="420" alt="Engram">
 </p>
 
 <p align="center">
   <strong>Biological memory fades. Digital memory leaks. We fixed both.</strong>
-</p>
-
-<p align="center">
-  <b>MEMORY</b> for AI · <b>PRIVACY</b> by design
 </p>
 
 <p align="center">
