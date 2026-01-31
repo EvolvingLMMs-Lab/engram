@@ -37,7 +37,7 @@ Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Curso
 Think of it as Signal for AI memory - your data never leaves your device in plaintext.
 
 <p align="center">
-  <img src="assets/demo.gif" alt="Engram Demo" width="600">
+  <img src="assets/demo.gif" alt="Engram Demo" width="100%">
 </p>
 
 ## Quick Start
