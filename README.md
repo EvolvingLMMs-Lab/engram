@@ -1,15 +1,26 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg" width="180" alt="Engram">
+
+```
+███████╗███╗   ██╗ ██████╗ ██████╗  █████╗ ███╗   ███╗
+██╔════╝████╗  ██║██╔════╝ ██╔══██╗██╔══██╗████╗ ████║
+█████╗  ██╔██╗ ██║██║  ███╗██████╔╝███████║██╔████╔██║
+██╔══╝  ██║╚██╗██║██║   ██║██╔══██╗██╔══██║██║╚██╔╝██║
+███████╗██║ ╚████║╚██████╔╝██║  ██║██║  ██║██║ ╚═╝ ██║
+╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+```
+
 </p>
 
 <p align="center">
+  <img src="https://raw.githubusercontent.com/EvolvingLMMs-Lab/engram/main/assets/logo.svg" height="18" alt="Engram" align="absmiddle">
   <strong>Local memory for your AI. Encrypted. Yours.</strong>
 </p>
 
 <p align="center">
   <a href="https://engram.lmms-lab.com"><img src="https://img.shields.io/badge/🌐-website-black" alt="website"></a>
-  <a href="https://github.com/EvolvingLMMs-Lab/engram/actions"><img src="https://img.shields.io/github/actions/workflow/status/EvolvingLMMs-Lab/engram/ci.yml?branch=main" alt="build"></a>
+  <a href="https://github.com/EvolvingLMMs-Lab/engram/stargazers"><img src="https://img.shields.io/github/stars/EvolvingLMMs-Lab/engram" alt="stars"></a>
   <a href="https://github.com/EvolvingLMMs-Lab/engram/blob/main/LICENSE"><img src="https://img.shields.io/github/license/EvolvingLMMs-Lab/engram" alt="license"></a>
+  <img src="https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white" alt="TypeScript">
 </p>
 
 <p align="center">
