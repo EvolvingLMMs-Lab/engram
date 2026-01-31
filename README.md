@@ -36,6 +36,8 @@ Engram is a **local-first, end-to-end encrypted memory layer** for Claude, Curso
 
 Think of it as Signal for AI memory - your data never leaves your device in plaintext.
 
+## Demo
+
 <p align="center">
   <img src="assets/demo.gif" alt="Engram Demo" width="100%">
 </p>
@@ -57,9 +59,6 @@ This single command:
 Restart your AI client. It remembers you now.
 
 > Already initialized? Use `npx engram-core init --force` to reinitialize.
-
-<!-- TODO: Add screenshot of terminal output after engram init -->
-<!-- ![Init](assets/init-screenshot.png) -->
 
 ## Features
 
@@ -103,9 +102,6 @@ Claude: [calls mcp_read_memory] Based on your preferences,
 
 The AI doesn't need special prompts. It just remembers.
 
-<!-- TODO: Add screenshot of actual Claude conversation -->
-<!-- ![Memory Example](assets/memory-example.png) -->
-
 ### Session Indexing (Treasure Map)
 
 Engram automatically indexes your Claude Code session history, enabling semantic search across past coding sessions:
@@ -124,9 +120,6 @@ Build your session index manually:
 npx engram-core build           # Index existing sessions
 npx engram-core build --watch   # Watch for new sessions
 ```
-
-<!-- TODO: Add screenshot showing session search results -->
-<!-- ![Session Search](assets/session-search.png) -->
 
 ### Skill & Agent Discovery
 
