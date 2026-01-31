@@ -14,6 +14,7 @@ import {
   phraseToKey,
   SecretStore,
   CryptoService,
+  IndexingService,
 } from '@engram/core';
 
 export function createCLI() {
@@ -77,6 +78,93 @@ export function createCLI() {
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Unknown error';
         spinner.fail(`Initialization failed: ${msg}`);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('build [paths...]')
+    .description('Build memory by indexing session files')
+    .option('-l, --limit <number>', 'Maximum files to process', '100')
+    .option('-w, --watch', 'Watch for new files after initial build')
+    .action(async (paths: string[], options: { limit: string; watch?: boolean }) => {
+      const spinner = ora('Building memory...').start();
+
+      try {
+        const db = initDatabase();
+        const store = new MemoryStore(db);
+        const embedder = new EmbeddingService();
+        const indexer = new IndexingService(store, embedder, undefined, db);
+
+        // Default paths if none provided
+        const searchPaths = paths.length > 0
+          ? paths
+          : [
+              join(homedir(), '.claude', 'projects'),
+              join(homedir(), '.opencode', 'history'),
+              join(homedir(), '.cursor'),
+              join(homedir(), '.codex'),
+            ];
+
+        // Collect all session files
+        const { globSync } = await import('glob');
+        const allFiles: string[] = [];
+
+        for (const searchPath of searchPaths) {
+          if (existsSync(searchPath)) {
+            const jsonlFiles = globSync(join(searchPath, '**/*.jsonl'));
+            const jsonFiles = globSync(join(searchPath, '**/*.json'));
+            allFiles.push(...jsonlFiles, ...jsonFiles);
+          }
+        }
+
+        const limit = parseInt(options.limit, 10);
+        const filesToProcess = allFiles.slice(0, limit);
+
+        spinner.text = `Processing ${filesToProcess.length} files...`;
+
+        let processed = 0;
+        let indexed = 0;
+        let skipped = 0;
+        let errors = 0;
+
+        // Listen to indexing events for progress
+        indexer.on('indexing', (event: { type: string; path: string }) => {
+          if (event.type === 'stored') {
+            indexed++;
+            spinner.text = `Indexed ${indexed}/${processed} files...`;
+          } else if (event.type === 'skipped') {
+            skipped++;
+          } else if (event.type === 'error') {
+            errors++;
+          }
+        });
+
+        for (const file of filesToProcess) {
+          await indexer.ingestFile(file, 'add');
+          processed++;
+          spinner.text = `Processing ${processed}/${filesToProcess.length} files...`;
+        }
+
+        spinner.succeed(
+          `Build complete: ${indexed} indexed, ${skipped} skipped, ${errors} errors`
+        );
+
+        if (options.watch) {
+          console.log(chalk.cyan('\nWatching for new files... (Ctrl+C to stop)'));
+
+          const { SessionWatcher } = await import('@engram/core');
+          const watcher = new SessionWatcher(indexer);
+          watcher.watch(searchPaths.filter(p => existsSync(p)));
+
+          // Keep process running
+          await new Promise(() => {});
+        } else {
+          db.close();
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        spinner.fail(`Build failed: ${msg}`);
         process.exit(1);
       }
     });

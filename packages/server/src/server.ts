@@ -85,7 +85,7 @@ export function createEngramServer(
   }
 
   const store = new MemoryStore(db, cryptoService);
-  const indexer = new IndexingService(store, embedder);
+  const indexer = new IndexingService(store, embedder, undefined, db);
   const watcher = new SessionWatcher(indexer);
 
   // Start watching Claude Code sessions (stored as JSONL in ~/.claude/projects/)

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { EventEmitter } from 'node:events';
+import type Database from 'better-sqlite3';
 import type { MemoryStore } from '../memory/store.js';
 import type { EmbeddingService } from '../embedding/service.js';
 import { LLMService } from '../llm/service.js';
@@ -305,22 +306,55 @@ export class CodexSessionParser implements SessionParser {
 export class IndexingService extends EventEmitter {
   private parsers: SessionParser[] = [];
   private llmService: LLMService | null = null;
+  private db: Database.Database | null = null;
   private progressMap: Map<string, IndexingEvent> = new Map();
   private recentEvents: IndexingEvent[] = [];
   private static readonly MAX_RECENT_EVENTS = 200;
+  private insertEventStmt: Database.Statement | null = null;
 
   constructor(
     private store: MemoryStore,
     private embedder: EmbeddingService,
-    llmService?: LLMService
+    llmService?: LLMService,
+    db?: Database.Database
   ) {
     super();
     this.llmService = llmService ?? null;
+    this.db = db ?? null;
+
+    // Prepare statement for inserting events
+    if (this.db) {
+      try {
+        this.insertEventStmt = this.db.prepare(`
+          INSERT INTO indexing_events (path, type, parser_type, summary, memory_id, error, timestamp)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+      } catch {
+        // Table might not exist yet in older databases
+        this.insertEventStmt = null;
+      }
+    }
+
     // Register all session parsers
     this.parsers.push(new ClaudeSessionParser());
     this.parsers.push(new OpenCodeSessionParser());
     this.parsers.push(new CursorSessionParser());
     this.parsers.push(new CodexSessionParser());
+  }
+
+  /**
+   * Set database connection for persisting indexing events
+   */
+  setDatabase(db: Database.Database): void {
+    this.db = db;
+    try {
+      this.insertEventStmt = this.db.prepare(`
+        INSERT INTO indexing_events (path, type, parser_type, summary, memory_id, error, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+    } catch {
+      this.insertEventStmt = null;
+    }
   }
 
   /**
@@ -357,6 +391,25 @@ export class IndexingService extends EventEmitter {
     if (this.recentEvents.length > IndexingService.MAX_RECENT_EVENTS) {
       this.recentEvents = this.recentEvents.slice(-IndexingService.MAX_RECENT_EVENTS);
     }
+
+    // Persist to database if available
+    if (this.insertEventStmt) {
+      try {
+        this.insertEventStmt.run(
+          event.path,
+          event.type,
+          event.parserType ?? null,
+          event.summary ?? null,
+          event.memoryId ?? null,
+          event.error ?? null,
+          event.timestamp
+        );
+      } catch (e) {
+        // Silently ignore DB errors to not block indexing
+        console.warn('[IndexingService] Failed to persist event:', e);
+      }
+    }
+
     this.emit('indexing', event);
   }
 

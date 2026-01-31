@@ -35,7 +35,17 @@ Think of it as Signal for AI memory - your data never leaves your device in plai
 npx engram-core init
 ```
 
-That's it. Restart your AI client. It remembers you now.
+This single command:
+1. Generates a master encryption key and 24-word recovery phrase
+2. Auto-configures all detected AI clients:
+   - **Claude Desktop** → `claude_desktop_config.json`
+   - **Cursor** → `~/.cursor/mcp.json`
+   - **Claude Code** → `~/.claude.json`
+3. Creates the local database at `~/.engram/`
+
+Restart your AI client. It remembers you now.
+
+> Already initialized? Use `npx engram-core init --force` to reinitialize.
 
 ## The Problem
 
@@ -148,9 +158,16 @@ The AI doesn't need special prompts. It just remembers.
 |------|--------------|
 | `mcp_save_memory` | Store facts for future sessions |
 | `mcp_read_memory` | Semantic search through memories |
-| `mcp_get_secret` | Retrieve encrypted API keys |
-| `mcp_set_secret` | Store new secrets |
+| `mcp_delete_memory` | Delete a specific memory by ID |
+| `mcp_list_memories` | List recent memories with optional filtering |
+| `mcp_memory_status` | Get memory system status and embedding model state |
 | `mcp_find_similar_sessions` | Find past sessions to fork from |
+| `mcp_get_secret` | Retrieve encrypted API keys |
+| `mcp_set_secret` | Store new secrets in the encrypted vault |
+| `mcp_authorize_device` | Authorize a new device for vault access |
+| `mcp_list_devices` | List all authorized devices |
+| `mcp_revoke_device` | Revoke a device's vault access |
+| `mcp_create_recovery_kit` | Generate Shamir secret sharing recovery shares |
 
 ## Project Structure
 

@@ -118,6 +118,31 @@ export function initDatabase(dbPath?: string): Database.Database {
 
      -- Index for efficient sync cursor queries
      CREATE INDEX IF NOT EXISTS idx_local_secret_sync_events_seq ON local_secret_sync_events(sequence_num);
+
+     -- Indexing events table for tracking file indexing progress
+     CREATE TABLE IF NOT EXISTS indexing_events (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       path TEXT NOT NULL,
+       type TEXT NOT NULL,
+       parser_type TEXT,
+       summary TEXT,
+       memory_id TEXT,
+       error TEXT,
+       timestamp INTEGER NOT NULL
+     );
+
+     -- Index for efficient queries by path and timestamp
+     CREATE INDEX IF NOT EXISTS idx_indexing_events_path ON indexing_events(path);
+     CREATE INDEX IF NOT EXISTS idx_indexing_events_timestamp ON indexing_events(timestamp DESC);
+
+     -- Keep only recent events (cleanup old entries automatically via trigger)
+     CREATE TRIGGER IF NOT EXISTS cleanup_old_indexing_events
+     AFTER INSERT ON indexing_events
+     BEGIN
+       DELETE FROM indexing_events WHERE id NOT IN (
+         SELECT id FROM indexing_events ORDER BY timestamp DESC LIMIT 500
+       );
+     END;
    `);
 
   return db;
