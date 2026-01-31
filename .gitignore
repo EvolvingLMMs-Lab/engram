@@ -36,3 +36,5 @@ pnpm-debug.log*
 Thumbs.db
 
 reports
+
+packages/web

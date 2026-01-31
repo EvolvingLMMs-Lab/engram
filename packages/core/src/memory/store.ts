@@ -8,6 +8,7 @@ import type {
   SyncEvent,
   SyncEventType,
   EncryptedData,
+  SearchOptions,
 } from '../types.js';
 import { DLPSanitizer } from '../security/dlp.js';
 import { CryptoService } from '../crypto/service.js';
@@ -327,13 +328,23 @@ export class MemoryStore {
 
   /**
    * Search memories by vector similarity
+   * @param queryVector - The query embedding vector
+   * @param limit - Maximum number of results (default: 5)
+   * @param options - Search options including projectPath for scope filtering
    */
-  search(queryVector: Float32Array, limit: number = 5): SearchResult[] {
+  search(
+    queryVector: Float32Array,
+    limit: number = 5,
+    options?: SearchOptions
+  ): SearchResult[] {
+    // Fetch more results if we need to filter by projectPath
+    const fetchLimit = options?.projectPath ? limit * 3 : limit;
+
     // Use sqlite-vec MATCH for KNN search with k constraint
     const rows = this.db
       .prepare(
         `
-      SELECT 
+      SELECT
         v.memory_id,
         v.distance,
         m.id, m.content, m.vector, m.tags, m.source, m.confidence, m.is_verified, m.created_at, m.updated_at
@@ -343,15 +354,39 @@ export class MemoryStore {
       ORDER BY v.distance
     `
       )
-      .all(queryVector, limit) as (MemoryRow & {
+      .all(queryVector, fetchLimit) as (MemoryRow & {
       memory_id: string;
       distance: number;
     })[];
 
-    return rows.map((row) => ({
+    let results = rows.map((row) => ({
       memory: this.rowToMemory(row),
       distance: row.distance,
     }));
+
+    // Filter by projectPath if provided (for project-scoped memories)
+    if (options?.projectPath) {
+      results = results.filter((r) => {
+        const source = r.memory.source;
+        if (!source) return true; // Allow memories without source
+
+        // Global plugins: always accessible
+        if (source.includes('/.claude/plugins/')) return true;
+
+        // Project-level .claude directory: check if it belongs to current project
+        if (source.includes('/.claude/')) {
+          const match = source.match(/^(.+)\/\.claude\//);
+          if (match) {
+            return match[1] === options.projectPath;
+          }
+        }
+
+        // Other memories (sessions, user-created): always accessible
+        return true;
+      });
+    }
+
+    return results.slice(0, limit);
   }
 
   /**
