@@ -7,6 +7,10 @@
 </p>
 
 <p align="center">
+  <em>Signal for AI memory. Local-first. E2E encrypted.</em>
+</p>
+
+<p align="center">
   <a href="https://engram.lmms-lab.com"><img src="https://img.shields.io/badge/🌐-website-black" alt="website"></a>
   <a href="https://github.com/EvolvingLMMs-Lab/engram/stargazers"><img src="https://img.shields.io/github/stars/EvolvingLMMs-Lab/engram" alt="stars"></a>
   <a href="https://github.com/EvolvingLMMs-Lab/engram/blob/main/LICENSE"><img src="https://img.shields.io/github/license/EvolvingLMMs-Lab/engram" alt="license"></a>
@@ -69,10 +73,11 @@ Restart your AI client. It remembers you now.
 
 ## Why Local?
 
-Look, ChatGPT and Claude have memory features now. But:
-- Your data lives on their servers
-- You can't search your old sessions
-- Switch apps? Start over.
+Cloud memory is the new panopticon. Your preferences, your API keys, your private thoughts - stored on servers you'll never see.
+
+**The default path says: "Trust the platform."**
+
+**We say: Own your keys. Own your data. Own your AI.**
 
 Engram keeps everything on your machine. You can `cat` the database if you want. It's just SQLite.
 
@@ -292,15 +297,19 @@ pnpm build
 pnpm test
 ```
 
-## Comparison
+## Why Not Cloud Memory?
 
-|                     | Engram | Cloud Memory (ChatGPT/Claude) |
-|---------------------|:------:|:-----------------------------:|
+When your AI's memory lives on someone else's server, it's not your AI.
+
+It's a rental with a microphone.
+
+|                     | Engram | Cloud Memory |
+|---------------------|:------:|:------------:|
 | Where's your data?  | Your disk | Their servers |
 | Encryption          | E2E, keys never leave | They can read it |
 | Works across apps   | Any MCP client | Locked to one app |
-| Search old sessions | ✅ | Nope |
-| Open source         | ✅ | Nope |
+| Search old sessions | ✅ | ✗ |
+| Open source         | ✅ | ✗ |
 
 ## FAQ
 
@@ -319,6 +328,17 @@ Yep.
 **API keys safe?**
 AES-256-GCM encrypted, stored in your system keychain.
 
+## Philosophy
+
+The AI industry solved intelligence.
+
+It forgot about sovereignty.
+
+Engram exists because we believe:
+- Memory is infrastructure, not a feature
+- Encryption is a right, not a premium tier
+- If you can't export it, you don't own it
+
 ## TODO
 
 - [ ] Publish `@engram/core` to npm and add npm badge
@@ -328,10 +348,5 @@ AES-256-GCM encrypted, stored in your system keychain.
 ---
 
 <p align="center">
-MIT License
-</p>
-
-<p align="center">
-Built by someone who got mass-amnesia'd by Claude one too many times.<br>
-If you find bugs, that's just more memories for Engram to help you fix next time.
+<strong>Your AI should remember you. Not the other way around.</strong>
 </p>
