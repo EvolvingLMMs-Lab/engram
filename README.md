@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Engram">
+  <img src="assets/logo.png" alt="Engram">
 </p>
 
 <p align="center">
