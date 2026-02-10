@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Engram">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.png">
+    <img alt="Engram" src="assets/logo-light.png">
+  </picture>
 </p>
 
 <p align="center">
