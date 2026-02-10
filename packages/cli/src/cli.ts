@@ -764,14 +764,21 @@ function getClaudeCodeConfigPath(): string {
 }
 
 function getEngramMcpConfig() {
-  return {
-    command: 'npx',
-    args: ['-y', 'engram-core', 'server'],
-    env: {
-      ENGRAM_PATH: join(homedir(), '.engram', 'memory.db'),
-      EMBEDDING_PROVIDER: 'local:onnx',
-    },
+  const env = {
+    ENGRAM_PATH: join(homedir(), '.engram', 'memory.db'),
+    EMBEDDING_PROVIDER: 'local:onnx',
   };
+
+  // Resolve server bin relative to this file: packages/cli/src → packages/server/dist/bin.js
+  const cliSrc = dirname(new URL(import.meta.url).pathname);
+  const serverBin = join(cliSrc, '..', '..', 'server', 'dist', 'bin.js');
+
+  if (existsSync(serverBin)) {
+    return { command: 'node', args: [serverBin], env };
+  }
+
+  // Fallback: npx (for published npm package scenario)
+  return { command: 'npx', args: ['-y', 'engram-core', 'server'], env };
 }
 
 async function configureClients() {
