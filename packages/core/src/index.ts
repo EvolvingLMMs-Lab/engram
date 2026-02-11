@@ -8,4 +8,5 @@ export * from './sync/index.js';
 export * from './secrets/index.js';
 export * from './indexing/index.js';
 export * from './llm/index.js';
+export * from './team/index.js';
 export * from './types.js';

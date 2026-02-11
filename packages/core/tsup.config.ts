@@ -10,6 +10,7 @@ export default defineConfig({
     'src/secrets/index.ts',
     'src/indexing/index.ts',
     'src/llm/index.ts',
+    'src/team/index.ts',
   ],
   format: ['esm'],
   dts: true,
