@@ -45,6 +45,10 @@
     "./indexing": {
       "types": "./dist/indexing/index.d.ts",
       "import": "./dist/indexing/index.js"
+    },
+    "./team": {
+      "types": "./dist/team/index.d.ts",
+      "import": "./dist/team/index.js"
     }
   },
   "files": [

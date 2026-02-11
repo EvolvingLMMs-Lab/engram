@@ -109,12 +109,13 @@ describe('MCP Server E2E — Real Protocol', () => {
       expect(info!.name).toBe('engram');
     });
 
-    it('should list all 12 registered tools with schemas', async () => {
+    it('should list all 13 registered tools with schemas', async () => {
       const { tools } = await client.listTools();
 
       const names = tools.map((t) => t.name).sort();
       expect(names).toEqual([
         'mcp_authorize_device',
+        'mcp_consolidate_team',
         'mcp_create_recovery_kit',
         'mcp_delete_memory',
         'mcp_find_similar_sessions',

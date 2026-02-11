@@ -128,6 +128,33 @@ The AI industry solved intelligence. It forgot about sovereignty.
 - Encryption is a right, not a premium tier
 - If you can't export it, you don't own it
 
+## Claude Code Agent Teams Integration
+
+Engram integrates with Claude Code Agent Teams through lifecycle hooks. When teams complete tasks or wind down, Engram can automatically consolidate team memories into structured summaries.
+
+**How it works:**
+- Agents save memories tagged with `team:<name>` during work
+- Hooks trigger `engram consolidate` at key moments (task completion, teammate idle)
+- Consolidation categorizes memories into findings, decisions, hypotheses, blockers, and action items
+- Summaries are saved as searchable `team-summary` memories for future sessions
+
+**Configuration** (`.claude/settings.json`):
+
+```json
+{
+  "hooks": {
+    "TaskCompleted": [
+      "engram consolidate"
+    ],
+    "TeammateIdle": [
+      "engram consolidate"
+    ]
+  }
+}
+```
+
+You can also run `engram consolidate` manually to generate team summaries on demand.
+
 ---
 
 <p align="center">

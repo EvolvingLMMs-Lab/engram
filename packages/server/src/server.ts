@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 
 import {
+  consolidateTeam,
   CryptoService,
+  detectTeam,
   EmbeddingService,
   generateRecoveryKit,
   IndexingService,
@@ -158,15 +160,50 @@ export function createEngramServer(
       try {
         // Sanitize content BEFORE embedding to ensure secrets are not in the vector
         const { sanitized } = store.sanitize(content);
+
+        // Auto-tag with team name if running in a team context
+        const teamInfo = detectTeam();
+        const finalTags = [...(tags ?? [])];
+        if (teamInfo) {
+          const teamTag = `team:${teamInfo.name}`;
+          if (!finalTags.includes(teamTag)) {
+            finalTags.push(teamTag);
+          }
+        }
+
         const vector = await embedder.embed(sanitized);
 
-        const memory = store.create({ content: sanitized, tags }, vector);
+        const memory = store.create(
+          { content: sanitized, tags: finalTags },
+          vector
+        );
+
+        // Check for contradictions among findings
+        let contradictionWarning = '';
+        if (finalTags.includes('finding')) {
+          const similar = store.search(vector, 3);
+          const contradictions = similar.filter(
+            (r) =>
+              r.distance < 0.3 &&
+              r.memory.id !== memory.id &&
+              r.memory.tags.includes('finding')
+          );
+          if (contradictions.length > 0) {
+            const warnings = contradictions
+              .map(
+                (c) =>
+                  `  - "${c.memory.content.substring(0, 80)}..." (similarity: ${(1 - c.distance).toFixed(3)})`
+              )
+              .join('\n');
+            contradictionWarning = `\n\nNote: Found ${contradictions.length} very similar existing finding(s) that may conflict:\n${warnings}`;
+          }
+        }
 
         return {
           content: [
             {
               type: 'text',
-              text: `Remembered: "${memory.content.substring(0, 100)}${memory.content.length > 100 ? '...' : ''}" (ID: ${memory.id})`,
+              text: `Remembered: "${memory.content.substring(0, 100)}${memory.content.length > 100 ? '...' : ''}" (ID: ${memory.id})${contradictionWarning}`,
             },
           ],
         };
@@ -360,7 +397,11 @@ export function createEngramServer(
         });
 
         const sessionResults = results
-          .filter((r) => r.memory.tags.includes('session-index'))
+          .filter(
+            (r) =>
+              r.memory.tags.includes('session-index') ||
+              r.memory.tags.includes('team-summary')
+          )
           .slice(0, limit);
 
         if (sessionResults.length === 0) {
@@ -373,6 +414,17 @@ export function createEngramServer(
 
         const formatted = sessionResults
           .map((r) => {
+            if (r.memory.tags.includes('team-summary')) {
+              const teamNameTag = r.memory.tags.find((t) =>
+                t.startsWith('team:')
+              );
+              const teamName = teamNameTag
+                ? teamNameTag.substring(5)
+                : 'unknown';
+              return `Team: ${teamName} (Similarity: ${(1 - r.distance).toFixed(2)}):
+Summary: ${r.memory.content}
+Actionable: This is a consolidated team summary. Use it as context for your current task.`;
+            }
             return `Found relevant session (Similarity: ${(1 - r.distance).toFixed(2)}):
 Path: ${r.memory.source}
 Summary: ${r.memory.content}
@@ -389,6 +441,54 @@ Actionable: Use grep/ripgrep on this file to find implementation details.`;
             {
               type: 'text',
               text: `Search failed: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'mcp_consolidate_team',
+    'Consolidate all memories from an agent team into a structured summary for future reference',
+    {
+      team_name: z
+        .string()
+        .optional()
+        .describe('Team name. Auto-detected if omitted.'),
+    },
+    async ({ team_name }) => {
+      try {
+        const resolvedName = team_name ?? detectTeam()?.name;
+        if (!resolvedName) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'No team detected and no team_name provided. Specify team_name or run within a team context.',
+              },
+            ],
+            isError: true,
+          };
+        }
+        const result = await consolidateTeam(resolvedName, store, embedder);
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Team "${resolvedName}" consolidated: ${result.memoriesProcessed} memories processed.\n\n${result.summary}`,
+            },
+          ],
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Consolidation failed: ${message}`,
             },
           ],
           isError: true,

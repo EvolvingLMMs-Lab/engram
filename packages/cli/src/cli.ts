@@ -15,6 +15,9 @@ import {
   SecretStore,
   CryptoService,
   IndexingService,
+  listTeams,
+  detectTeam,
+  consolidateTeam,
 } from '@engram/core';
 
 export function createCLI() {
@@ -630,6 +633,122 @@ export function createCLI() {
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Unknown error';
         spinner.fail(`Sync failed: ${msg}`);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('teams')
+    .description('List past agent teams and their knowledge')
+    .option('-s, --search <query>', 'Search team summaries semantically')
+    .action(async (options: { search?: string }) => {
+      const spinner = ora('Loading teams...').start();
+
+      try {
+        const db = initDatabase();
+        const store = new MemoryStore(db);
+
+        if (options.search) {
+          spinner.text = 'Searching team summaries...';
+          const embedder = new EmbeddingService();
+          const vector = await embedder.embed(options.search);
+
+          const results = store.search(vector, 10);
+          const teamResults = results.filter((r) =>
+            r.memory.tags.includes('team-summary')
+          );
+
+          spinner.stop();
+
+          if (teamResults.length === 0) {
+            console.log(chalk.yellow('No matching team summaries found.'));
+          } else {
+            console.log(
+              chalk.bold(`\nFound ${teamResults.length} team summaries:\n`)
+            );
+            teamResults.forEach((r, i) => {
+              const date = new Date(r.memory.createdAt).toLocaleDateString();
+              const similarity = (1 - r.distance).toFixed(3);
+              const teamTag = r.memory.tags.find((t) => t.startsWith('team:'));
+              const teamName = teamTag ? teamTag.replace('team:', '') : 'unknown';
+              console.log(chalk.green.bold(`${i + 1}. Team: ${teamName}`));
+              console.log(chalk.dim(`   ${date} | similarity: ${similarity}`));
+              console.log(chalk.white(`   ${r.memory.content.split('\n')[0]}`));
+              console.log(chalk.dim('─'.repeat(40)) + '\n');
+            });
+          }
+        } else {
+          const teams = listTeams();
+          spinner.stop();
+
+          if (teams.length === 0) {
+            console.log(chalk.yellow('No teams found.'));
+          } else {
+            console.log(chalk.bold(`\nFound ${teams.length} teams:\n`));
+            for (const team of teams) {
+              const teamTag = `team:${team.name}`;
+              const allMemories = store.list({ limit: 10000 });
+              const teamMemoryCount = allMemories.filter((m) =>
+                m.tags.includes(teamTag)
+              ).length;
+
+              console.log(
+                chalk.cyan.bold(`  ${team.name}`) +
+                  chalk.dim(` (${team.members.length} members, ${teamMemoryCount} memories)`)
+              );
+              for (const member of team.members) {
+                console.log(chalk.dim(`    - ${member.name} [${member.agentType}]`));
+              }
+              console.log('');
+            }
+          }
+        }
+
+        db.close();
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        spinner.fail(`Teams failed: ${msg}`);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('consolidate')
+    .description('Consolidate team memories into a structured summary')
+    .option('-t, --team <name>', 'Team name (auto-detected if omitted)')
+    .action(async (options: { team?: string }) => {
+      const spinner = ora('Consolidating team memories...').start();
+
+      try {
+        const teamName = options.team ?? detectTeam()?.name ?? null;
+
+        if (!teamName) {
+          spinner.fail('No team detected. Use --team <name> to specify.');
+          process.exit(1);
+        }
+
+        spinner.text = `Consolidating memories for team "${teamName}"...`;
+
+        const db = initDatabase();
+        const store = new MemoryStore(db);
+        const embedder = new EmbeddingService();
+
+        const result = await consolidateTeam(teamName, store, embedder);
+
+        spinner.succeed(
+          `Consolidated ${result.memoriesProcessed} memories for team "${result.teamName}"`
+        );
+
+        console.log(chalk.bold('\nSummary:\n'));
+        console.log(result.summary);
+        console.log(
+          chalk.dim(`\nMemory ID: ${result.memoryId}`)
+        );
+
+        db.close();
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        spinner.fail(`Consolidation failed: ${msg}`);
         process.exit(1);
       }
     });

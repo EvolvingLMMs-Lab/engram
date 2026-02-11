@@ -83,6 +83,14 @@ vi.mock('@engram/core', () => {
       }
     ),
     KeyManager: vi.fn().mockImplementation(() => ({})),
+    detectTeam: vi.fn().mockReturnValue(null),
+    consolidateTeam: vi.fn().mockResolvedValue({
+      teamName: 'test-team',
+      summary: '# Team Summary',
+      memoryId: 'sum-1',
+      memoriesProcessed: 3,
+      categoryCounts: { finding: 2, other: 1 },
+    }),
   };
 });
 
