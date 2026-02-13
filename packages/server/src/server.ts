@@ -1,4 +1,6 @@
 import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 import {
   consolidateTeam,
@@ -49,7 +51,7 @@ export function createEngramServer(
   const db = initDatabase(config.dbPath);
   const embedder = new EmbeddingService(
     'Xenova/all-MiniLM-L6-v2',
-    config.modelsDir ?? './.cache/models'
+    config.modelsDir ?? join(homedir(), '.engram', 'models')
   );
 
   let cryptoService: CryptoService | undefined;
