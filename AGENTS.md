@@ -24,6 +24,9 @@ Project guidance for agents working in this repository.
 - Check dependency vulnerabilities: `pnpm audit --audit-level moderate`
 - Check production dependency vulnerabilities:
   `pnpm audit --prod --audit-level moderate`
+- In a clean checkout, run `pnpm build` before `pnpm lint` or tests. Workspace
+  package exports point at `dist/` declaration files, and the server E2E tests
+  require the built server binary.
 
 ## Dependencies
 
