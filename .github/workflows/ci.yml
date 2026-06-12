@@ -40,58 +40,6 @@ jobs:
       - name: Test
         run: pnpm exec vitest run
 
-  build-binaries:
-    needs: lint-and-test
-    runs-on: ${{ matrix.os }}
-    env:
-      npm_config_python: python
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            artifact: engram-linux
-          - os: macos-latest
-            artifact: engram-macos
-          - os: windows-latest
-            artifact: engram-windows.exe
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Linux native dependencies
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libsecret-1-0 libsecret-1-dev
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Build binary
-        run: |
-          cd packages/cli
-          npx pkg . --target node20-${{ matrix.os == 'ubuntu-latest' && 'linux' || matrix.os == 'macos-latest' && 'macos' || 'win' }}-x64 --output ${{ matrix.artifact }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: packages/cli/${{ matrix.artifact }}
-
   publish:
     needs: lint-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
