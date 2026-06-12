@@ -35,6 +35,8 @@ Project guidance for agents working in this repository.
   install scripts before running database, keychain, or image tests.
 - On Linux CI, install `libsecret-1-0` and `libsecret-1-dev` before running
   tests that import `keytar`.
+- Binary build CI pins Python 3.11 for `node-gyp`; newer Python versions may
+  not include `distutils`, which older native build tooling still imports.
 - The root `pnpm.overrides.protobufjs` entry is intentional. It keeps audit
   clean while `@xenova/transformers` still pulls `protobufjs` transitively via
   `onnxruntime-web` / `onnx-proto`.

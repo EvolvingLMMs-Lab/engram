@@ -43,6 +43,8 @@ jobs:
   build-binaries:
     needs: lint-and-test
     runs-on: ${{ matrix.os }}
+    env:
+      npm_config_python: python
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -64,6 +66,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Install Linux native dependencies
         if: runner.os == 'Linux'
