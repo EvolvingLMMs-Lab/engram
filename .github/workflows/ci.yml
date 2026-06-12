@@ -38,7 +38,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Test
-        run: pnpm exec vitest run
+        run: pnpm exec vitest run --no-file-parallelism
 
   publish:
     needs: lint-and-test

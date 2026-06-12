@@ -20,6 +20,7 @@ Project guidance for agents working in this repository.
 - Build all packages: `pnpm build`
 - Typecheck all packages: `pnpm -r typecheck`
 - Run tests once: `pnpm exec vitest run`
+- Run CI-style tests serially: `pnpm exec vitest run --no-file-parallelism`
 - Run lint: `pnpm lint`
 - Check dependency vulnerabilities: `pnpm audit --audit-level moderate`
 - Check production dependency vulnerabilities:
