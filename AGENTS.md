@@ -33,6 +33,8 @@ Project guidance for agents working in this repository.
 - Native dependencies include `better-sqlite3`, `keytar`, and `sharp`. If
   dependencies were installed with `--ignore-scripts`, rebuild or run their
   install scripts before running database, keychain, or image tests.
+- On Linux CI, install `libsecret-1-0` and `libsecret-1-dev` before running
+  tests that import `keytar`.
 - The root `pnpm.overrides.protobufjs` entry is intentional. It keeps audit
   clean while `@xenova/transformers` still pulls `protobufjs` transitively via
   `onnxruntime-web` / `onnx-proto`.

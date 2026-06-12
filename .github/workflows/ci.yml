@@ -21,6 +21,10 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-0 libsecret-1-dev
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -61,6 +65,10 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-0 libsecret-1-dev
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -94,6 +102,10 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-0 libsecret-1-dev
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
