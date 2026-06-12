@@ -9,7 +9,12 @@
  * handlers are called directly as functions, not through MCP protocol.
  * For real protocol-level E2E tests, see ../e2e/mcp-protocol.e2e.test.ts.
  */
+import { CryptoService } from '@engram/core';
+import type * as EngramCore from '@engram/core';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+import type { EngramServerResult } from '../../src/server';
+import { createEngramServer } from '../../src/server';
 
 // Mock only McpServer (capture tool handlers) and SessionWatcher (filesystem)
 vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
@@ -17,9 +22,18 @@ vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
     McpServer: vi.fn().mockImplementation(() => {
       const tools = new Map();
       return {
-        tool: vi.fn().mockImplementation((name: string, _desc: string, _schema: unknown, handler: Function) => {
-          tools.set(name, handler);
-        }),
+        tool: vi
+          .fn()
+          .mockImplementation(
+            (
+              name: string,
+              _desc: string,
+              _schema: unknown,
+              handler: Function
+            ) => {
+              tools.set(name, handler);
+            }
+          ),
         _getToolHandler: (name: string) => tools.get(name),
       };
     }),
@@ -27,7 +41,7 @@ vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
 });
 
 vi.mock('@engram/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@engram/core')>();
+  const actual = await importOriginal<typeof EngramCore>();
   return {
     ...actual,
     // Only mock SessionWatcher to avoid filesystem side effects
@@ -37,7 +51,9 @@ vi.mock('@engram/core', async (importOriginal) => {
         close: vi.fn().mockResolvedValue(undefined),
       })),
       {
-        getDefaultPaths: vi.fn().mockReturnValue(['/mock/.claude/projects', '/mock/.claude/plugins']),
+        getDefaultPaths: vi
+          .fn()
+          .mockReturnValue(['/mock/.claude/projects', '/mock/.claude/plugins']),
         getProjectPath: vi.fn().mockReturnValue('/mock/project/.claude'),
       }
     ),
@@ -45,10 +61,6 @@ vi.mock('@engram/core', async (importOriginal) => {
     IndexingService: vi.fn().mockImplementation(() => ({})),
   };
 });
-
-import { createEngramServer } from '../../src/server';
-import type { EngramServerResult } from '../../src/server';
-import { CryptoService } from '@engram/core';
 
 describe('MCP Server Integration — Tool Handlers', () => {
   let serverResult: EngramServerResult;
@@ -108,7 +120,10 @@ describe('MCP Server Integration — Tool Handlers', () => {
       // Search for something completely unrelated
       // Note: store has the Rust memory from previous test, so we check that
       // the response format is correct regardless
-      const result = await read({ query: 'quantum entanglement physics', limit: 1 });
+      const result = await read({
+        query: 'quantum entanglement physics',
+        limit: 1,
+      });
       expect(result.content[0].text).toBeDefined();
       expect(result.isError).toBeUndefined();
     });
@@ -127,7 +142,7 @@ describe('MCP Server Integration — Tool Handlers', () => {
         content: 'Ephemeral memory for lifecycle test',
         tags: ['lifecycle'],
       });
-      const idMatch = saveResult.content[0].text.match(/ID: ([^\)]+)/);
+      const idMatch = saveResult.content[0].text.match(/ID: ([^)]+)/);
       expect(idMatch).not.toBeNull();
       const memoryId = idMatch![1];
 
@@ -182,7 +197,9 @@ describe('MCP Server Integration — Tool Handlers', () => {
         description: 'Test key for integration',
       });
 
-      expect(setResult.content[0].text).toContain("'TEST_API_KEY' stored successfully");
+      expect(setResult.content[0].text).toContain(
+        "'TEST_API_KEY' stored successfully"
+      );
 
       const getResult = await getSecret({ key: 'TEST_API_KEY' });
       expect(getResult.content[0].text).toBe('my-secret-api-value-12345');
@@ -255,12 +272,21 @@ describe('MCP Server Integration — Tool Handlers', () => {
       const del = getHandler('mcp_delete_memory');
 
       // Save multiple memories
-      const r1 = await save({ content: 'PostgreSQL supports JSONB columns for semi-structured data', tags: ['database'] });
-      const r2 = await save({ content: 'Redis provides in-memory caching with pub/sub', tags: ['database'] });
-      const r3 = await save({ content: 'SQLite is embedded and serverless', tags: ['database'] });
+      const r1 = await save({
+        content: 'PostgreSQL supports JSONB columns for semi-structured data',
+        tags: ['database'],
+      });
+      const r2 = await save({
+        content: 'Redis provides in-memory caching with pub/sub',
+        tags: ['database'],
+      });
+      await save({
+        content: 'SQLite is embedded and serverless',
+        tags: ['database'],
+      });
 
-      const id1 = r1.content[0].text.match(/ID: ([^\)]+)/)![1];
-      const id2 = r2.content[0].text.match(/ID: ([^\)]+)/)![1];
+      const id1 = r1.content[0].text.match(/ID: ([^)]+)/)![1];
+      const id2 = r2.content[0].text.match(/ID: ([^)]+)/)![1];
 
       // Search — should find database memories
       const searchBefore = await read({ query: 'database systems', limit: 5 });

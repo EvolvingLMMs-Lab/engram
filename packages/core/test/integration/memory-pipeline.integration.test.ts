@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type Database from 'better-sqlite3';
-import { initDatabase } from '../../src/memory/database';
-import { MemoryStore } from '../../src/memory/store';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
 import { CryptoService } from '../../src/crypto/service';
 import { EmbeddingService } from '../../src/embedding/service';
+import { initDatabase } from '../../src/memory/database';
+import { MemoryStore } from '../../src/memory/store';
 
 /**
  * Real Embedding Pipeline Integration Tests

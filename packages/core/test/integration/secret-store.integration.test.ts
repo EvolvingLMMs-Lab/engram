@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { CryptoService } from '../../src/crypto/service';
 import { initDatabase } from '../../src/memory/database';
 import { SecretStore } from '../../src/secrets/store';
-import { CryptoService } from '../../src/crypto/service';
 
 describe('Secret Store Integration', () => {
   let db: Database.Database;

@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 /**
  * A member of a Claude Code agent team

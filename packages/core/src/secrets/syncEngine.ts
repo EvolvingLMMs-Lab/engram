@@ -1,7 +1,9 @@
 import { createHmac, randomUUID } from 'node:crypto';
+
 import type Database from 'better-sqlite3';
-import { CryptoService } from '../crypto/service.js';
+
 import { rsaEncrypt } from '../crypto/rsa.js';
+import { CryptoService } from '../crypto/service.js';
 
 export interface SecretsSyncConfig {
   apiBaseUrl: string;

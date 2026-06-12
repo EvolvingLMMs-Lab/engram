@@ -30,13 +30,13 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   {
     name: 'Database URL',
     pattern:
-      /(postgres|mysql|mongodb|redis):\/\/[a-zA-Z0-9_]+:[^@]+@[a-zA-Z0-9_\-\.]+/g,
+      /(postgres|mysql|mongodb|redis):\/\/[a-zA-Z0-9_]+:[^@]+@[a-zA-Z0-9_.-]+/g,
     redactLabel: 'DB_CONNECTION_STRING',
   },
   // Anthropic API Key (Claude)
   {
     name: 'Anthropic API Key',
-    pattern: /sk-ant-[a-zA-Z0-9\-_]{20,}/g, // Simplified pattern
+    pattern: /sk-ant-[a-zA-Z0-9_-]{20,}/g, // Simplified pattern
     redactLabel: 'ANTHROPIC_KEY',
   },
   // Stripe Live Key
@@ -67,7 +67,7 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   // Google API Key
   {
     name: 'Google API Key',
-    pattern: /AIza[0-9A-Za-z\\-_]{35}/g,
+    pattern: /AIza[0-9A-Za-z_-]{35}/g,
     redactLabel: 'GOOGLE_API_KEY',
   },
   // RSA/Private Key
@@ -80,7 +80,7 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   // Generic Bearer Token (heuristic: "Bearer " followed by 32+ chars)
   {
     name: 'Generic Bearer Token',
-    pattern: /Bearer [a-zA-Z0-9\-\._\~\+\/]{32,}/g,
+    pattern: /Bearer [-a-zA-Z0-9._~+/]{32,}/g,
     redactLabel: 'BEARER_TOKEN',
   },
 ];

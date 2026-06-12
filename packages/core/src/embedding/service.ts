@@ -1,7 +1,12 @@
-import { pipeline, env, type FeatureExtractionPipeline } from '@xenova/transformers';
 import { existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+
+import {
+  pipeline,
+  env,
+  type FeatureExtractionPipeline,
+} from '@xenova/transformers';
 
 const DEFAULT_CACHE_DIR = join(homedir(), '.engram', 'models');
 
@@ -12,7 +17,10 @@ export class EmbeddingService {
   private isInitializing = false;
   private initPromise: Promise<void> | null = null;
 
-  constructor(modelName = 'Xenova/all-MiniLM-L6-v2', cacheDir = DEFAULT_CACHE_DIR) {
+  constructor(
+    modelName = 'Xenova/all-MiniLM-L6-v2',
+    cacheDir = DEFAULT_CACHE_DIR
+  ) {
     this.modelName = modelName;
     this.cacheDir = cacheDir;
   }

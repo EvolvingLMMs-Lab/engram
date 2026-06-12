@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+
 import type {
   SyncConfig,
   SyncStatus,

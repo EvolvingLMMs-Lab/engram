@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { consolidateTeam } from '../../src/team/consolidate';
-import type { MemoryStore } from '../../src/memory/store';
+
 import type { EmbeddingService } from '../../src/embedding/service';
+import type { MemoryStore } from '../../src/memory/store';
+import { consolidateTeam } from '../../src/team/consolidate';
 import type { Memory } from '../../src/types';
 
 function makeMemory(

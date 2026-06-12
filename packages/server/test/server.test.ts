@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createEngramServer } from '../src/server';
 import { generateRecoveryKit } from '@engram/core';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { createEngramServer } from '../src/server';
 
 // Mock MCP Server
 vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+
 import { EmbeddingService } from '../../src/embedding/service';
 
 describe('EmbeddingService', () => {

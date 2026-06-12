@@ -11,6 +11,16 @@
  * Uses mocked McpServer (captures tool handlers) + mocked SessionWatcher,
  * but real @engram/core logic (MemoryStore, EmbeddingService, consolidateTeam, detectTeam).
  */
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { CryptoService } from '@engram/core';
+import type * as EngramCore from '@engram/core';
+import {
+  detectTeam as realDetectTeam,
+  listTeams as realListTeams,
+} from '@engram/core/team';
 import {
   describe,
   it,
@@ -21,9 +31,9 @@ import {
   afterEach,
   vi,
 } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+
+import type { EngramServerResult } from '../../src/server';
+import { createEngramServer } from '../../src/server';
 
 // Mock only McpServer (capture tool handlers) and SessionWatcher (filesystem)
 vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
@@ -31,16 +41,18 @@ vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
     McpServer: vi.fn().mockImplementation(() => {
       const tools = new Map();
       return {
-        tool: vi.fn().mockImplementation(
-          (
-            name: string,
-            _desc: string,
-            _schema: unknown,
-            handler: Function
-          ) => {
-            tools.set(name, handler);
-          }
-        ),
+        tool: vi
+          .fn()
+          .mockImplementation(
+            (
+              name: string,
+              _desc: string,
+              _schema: unknown,
+              handler: Function
+            ) => {
+              tools.set(name, handler);
+            }
+          ),
         _getToolHandler: (name: string) => tools.get(name),
       };
     }),
@@ -48,7 +60,7 @@ vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
 });
 
 vi.mock('@engram/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@engram/core')>();
+  const actual = await importOriginal<typeof EngramCore>();
   return {
     ...actual,
     // Mock detectTeam so integration tests can control team context per-test
@@ -62,10 +74,7 @@ vi.mock('@engram/core', async (importOriginal) => {
       {
         getDefaultPaths: vi
           .fn()
-          .mockReturnValue([
-            '/mock/.claude/projects',
-            '/mock/.claude/plugins',
-          ]),
+          .mockReturnValue(['/mock/.claude/projects', '/mock/.claude/plugins']),
         getProjectPath: vi.fn().mockReturnValue('/mock/project/.claude'),
       }
     ),
@@ -73,23 +82,6 @@ vi.mock('@engram/core', async (importOriginal) => {
     IndexingService: vi.fn().mockImplementation(() => ({})),
   };
 });
-
-import { createEngramServer } from '../../src/server';
-import type { EngramServerResult } from '../../src/server';
-import {
-  CryptoService,
-  detectTeam,
-  listTeams,
-  consolidateTeam,
-} from '@engram/core';
-
-// Import the real (unmocked) detector functions for E.4/E.5 tests.
-// vi.mock('@engram/core') only mocks the main '@engram/core' specifier;
-// subpath exports like '@engram/core/team' remain unmocked.
-import {
-  detectTeam as realDetectTeam,
-  listTeams as realListTeams,
-} from '@engram/core/team';
 
 // ============================================================
 // E.1 — Team auto-tagging
@@ -158,9 +150,7 @@ describe('E.1 — Team auto-tagging in mcp_save_memory', () => {
     const { detectTeam: mockedDetectTeam } = await import('@engram/core');
     vi.mocked(mockedDetectTeam).mockReturnValue({
       name: 'alpha-team',
-      members: [
-        { name: 'lead', agentId: 'a1', agentType: 'coordinator' },
-      ],
+      members: [{ name: 'lead', agentId: 'a1', agentType: 'coordinator' }],
       configPath: join(teamsDir, 'alpha-team', 'config.json'),
     });
 
@@ -292,9 +282,7 @@ describe('E.2 — Consolidation round-trip', () => {
     expect(consolidateResult.content[0].text).toContain(
       'Team "consolidation-test" consolidated'
     );
-    expect(consolidateResult.content[0].text).toContain(
-      '4 memories processed'
-    );
+    expect(consolidateResult.content[0].text).toContain('4 memories processed');
     expect(consolidateResult.isError).toBeUndefined();
 
     // 3. Verify summary content
@@ -445,8 +433,7 @@ describe('E.3 — Contradiction detection', () => {
     });
 
     const second = await save({
-      content:
-        'Kubernetes pods are scheduled by the kube-scheduler component',
+      content: 'Kubernetes pods are scheduled by the kube-scheduler component',
       tags: ['finding'],
     });
 
@@ -498,9 +485,7 @@ describe('E.4 — listTeams and detectTeam with mock directory', () => {
     writeFileSync(
       join(team2Dir, 'config.json'),
       JSON.stringify({
-        members: [
-          { name: 'api-lead', agentId: 'b1', agentType: 'lead' },
-        ],
+        members: [{ name: 'api-lead', agentId: 'b1', agentType: 'lead' }],
       })
     );
 
@@ -733,9 +718,7 @@ describe('E.5 — Edge cases', () => {
       expect(second.content[0].text).toContain(
         'Payment webhook needs to handle duplicate events'
       );
-      expect(second.content[0].text).toContain(
-        'payment API returns HTTP 402'
-      );
+      expect(second.content[0].text).toContain('payment API returns HTTP 402');
     });
   });
 });

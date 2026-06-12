@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { CryptoService } from '../../src/crypto/service';
 import { initDatabase } from '../../src/memory/database';
 import { MemoryStore } from '../../src/memory/store';
-import { CryptoService } from '../../src/crypto/service';
 import type { SyncEvent, EncryptedData } from '../../src/types';
 
 /**

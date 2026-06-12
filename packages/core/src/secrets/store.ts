@@ -1,6 +1,8 @@
 import type Database from 'better-sqlite3';
 import { v7 as uuidv7 } from 'uuid';
+
 import type { CryptoService } from '../crypto/service.js';
+
 import type { SecretsSyncEngine } from './syncEngine.js';
 
 export interface Secret {

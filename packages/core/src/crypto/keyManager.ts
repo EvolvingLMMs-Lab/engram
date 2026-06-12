@@ -1,7 +1,8 @@
 import keytar from 'keytar';
 
-import { CryptoService } from './service.js';
 import type { EncryptedData } from '../types.js';
+
+import { CryptoService } from './service.js';
 
 const SERVICE_NAME = 'engram';
 const MASTER_KEY_ACCOUNT = 'master-key';

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { DLPSanitizer } from '../../src/security/dlp';
 
 describe('DLPSanitizer', () => {

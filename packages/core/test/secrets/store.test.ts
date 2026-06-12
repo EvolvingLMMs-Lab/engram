@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
-import { SecretStore } from '../../src/secrets/store';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { CryptoService } from '../../src/crypto/service';
+import { SecretStore } from '../../src/secrets/store';
 
 // Mock CryptoService
 vi.mock('../../src/crypto/service', () => {

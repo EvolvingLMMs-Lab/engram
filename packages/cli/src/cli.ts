@@ -1,9 +1,6 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import ora from 'ora';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
+import { join, dirname } from 'node:path';
 
 import {
   initDatabase,
@@ -19,6 +16,9 @@ import {
   detectTeam,
   consolidateTeam,
 } from '@engram/core';
+import chalk from 'chalk';
+import { Command } from 'commander';
+import ora from 'ora';
 
 export function createCLI() {
   const program = new Command();
@@ -90,87 +90,92 @@ export function createCLI() {
     .description('Build memory by indexing session files')
     .option('-l, --limit <number>', 'Maximum files to process', '100')
     .option('-w, --watch', 'Watch for new files after initial build')
-    .action(async (paths: string[], options: { limit: string; watch?: boolean }) => {
-      const spinner = ora('Building memory...').start();
+    .action(
+      async (paths: string[], options: { limit: string; watch?: boolean }) => {
+        const spinner = ora('Building memory...').start();
 
-      try {
-        const db = initDatabase();
-        const store = new MemoryStore(db);
-        const embedder = new EmbeddingService();
-        const indexer = new IndexingService(store, embedder, undefined, db);
+        try {
+          const db = initDatabase();
+          const store = new MemoryStore(db);
+          const embedder = new EmbeddingService();
+          const indexer = new IndexingService(store, embedder, undefined, db);
 
-        // Default paths if none provided
-        const searchPaths = paths.length > 0
-          ? paths
-          : [
-              join(homedir(), '.claude', 'projects'),
-              join(homedir(), '.opencode', 'history'),
-              join(homedir(), '.cursor'),
-              join(homedir(), '.codex'),
-            ];
+          // Default paths if none provided
+          const searchPaths =
+            paths.length > 0
+              ? paths
+              : [
+                  join(homedir(), '.claude', 'projects'),
+                  join(homedir(), '.opencode', 'history'),
+                  join(homedir(), '.cursor'),
+                  join(homedir(), '.codex'),
+                ];
 
-        // Collect all session files
-        const { globSync } = await import('glob');
-        const allFiles: string[] = [];
+          // Collect all session files
+          const { globSync } = await import('glob');
+          const allFiles: string[] = [];
 
-        for (const searchPath of searchPaths) {
-          if (existsSync(searchPath)) {
-            const jsonlFiles = globSync(join(searchPath, '**/*.jsonl'));
-            const jsonFiles = globSync(join(searchPath, '**/*.json'));
-            allFiles.push(...jsonlFiles, ...jsonFiles);
+          for (const searchPath of searchPaths) {
+            if (existsSync(searchPath)) {
+              const jsonlFiles = globSync(join(searchPath, '**/*.jsonl'));
+              const jsonFiles = globSync(join(searchPath, '**/*.json'));
+              allFiles.push(...jsonlFiles, ...jsonFiles);
+            }
           }
-        }
 
-        const limit = parseInt(options.limit, 10);
-        const filesToProcess = allFiles.slice(0, limit);
+          const limit = parseInt(options.limit, 10);
+          const filesToProcess = allFiles.slice(0, limit);
 
-        spinner.text = `Processing ${filesToProcess.length} files...`;
+          spinner.text = `Processing ${filesToProcess.length} files...`;
 
-        let processed = 0;
-        let indexed = 0;
-        let skipped = 0;
-        let errors = 0;
+          let processed = 0;
+          let indexed = 0;
+          let skipped = 0;
+          let errors = 0;
 
-        // Listen to indexing events for progress
-        indexer.on('indexing', (event: { type: string; path: string }) => {
-          if (event.type === 'stored') {
-            indexed++;
-            spinner.text = `Indexed ${indexed}/${processed} files...`;
-          } else if (event.type === 'skipped') {
-            skipped++;
-          } else if (event.type === 'error') {
-            errors++;
+          // Listen to indexing events for progress
+          indexer.on('indexing', (event: { type: string; path: string }) => {
+            if (event.type === 'stored') {
+              indexed++;
+              spinner.text = `Indexed ${indexed}/${processed} files...`;
+            } else if (event.type === 'skipped') {
+              skipped++;
+            } else if (event.type === 'error') {
+              errors++;
+            }
+          });
+
+          for (const file of filesToProcess) {
+            await indexer.ingestFile(file, 'add');
+            processed++;
+            spinner.text = `Processing ${processed}/${filesToProcess.length} files...`;
           }
-        });
 
-        for (const file of filesToProcess) {
-          await indexer.ingestFile(file, 'add');
-          processed++;
-          spinner.text = `Processing ${processed}/${filesToProcess.length} files...`;
+          spinner.succeed(
+            `Build complete: ${indexed} indexed, ${skipped} skipped, ${errors} errors`
+          );
+
+          if (options.watch) {
+            console.log(
+              chalk.cyan('\nWatching for new files... (Ctrl+C to stop)')
+            );
+
+            const { SessionWatcher } = await import('@engram/core');
+            const watcher = new SessionWatcher(indexer);
+            watcher.watch(searchPaths.filter((p) => existsSync(p)));
+
+            // Keep process running
+            await new Promise(() => {});
+          } else {
+            db.close();
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : 'Unknown error';
+          spinner.fail(`Build failed: ${msg}`);
+          process.exit(1);
         }
-
-        spinner.succeed(
-          `Build complete: ${indexed} indexed, ${skipped} skipped, ${errors} errors`
-        );
-
-        if (options.watch) {
-          console.log(chalk.cyan('\nWatching for new files... (Ctrl+C to stop)'));
-
-          const { SessionWatcher } = await import('@engram/core');
-          const watcher = new SessionWatcher(indexer);
-          watcher.watch(searchPaths.filter(p => existsSync(p)));
-
-          // Keep process running
-          await new Promise(() => {});
-        } else {
-          db.close();
-        }
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Unknown error';
-        spinner.fail(`Build failed: ${msg}`);
-        process.exit(1);
       }
-    });
+    );
 
   program
     .command('server')
@@ -670,7 +675,9 @@ export function createCLI() {
               const date = new Date(r.memory.createdAt).toLocaleDateString();
               const similarity = (1 - r.distance).toFixed(3);
               const teamTag = r.memory.tags.find((t) => t.startsWith('team:'));
-              const teamName = teamTag ? teamTag.replace('team:', '') : 'unknown';
+              const teamName = teamTag
+                ? teamTag.replace('team:', '')
+                : 'unknown';
               console.log(chalk.green.bold(`${i + 1}. Team: ${teamName}`));
               console.log(chalk.dim(`   ${date} | similarity: ${similarity}`));
               console.log(chalk.white(`   ${r.memory.content.split('\n')[0]}`));
@@ -694,10 +701,14 @@ export function createCLI() {
 
               console.log(
                 chalk.cyan.bold(`  ${team.name}`) +
-                  chalk.dim(` (${team.members.length} members, ${teamMemoryCount} memories)`)
+                  chalk.dim(
+                    ` (${team.members.length} members, ${teamMemoryCount} memories)`
+                  )
               );
               for (const member of team.members) {
-                console.log(chalk.dim(`    - ${member.name} [${member.agentType}]`));
+                console.log(
+                  chalk.dim(`    - ${member.name} [${member.agentType}]`)
+                );
               }
               console.log('');
             }
@@ -741,9 +752,7 @@ export function createCLI() {
 
         console.log(chalk.bold('\nSummary:\n'));
         console.log(result.summary);
-        console.log(
-          chalk.dim(`\nMemory ID: ${result.memoryId}`)
-        );
+        console.log(chalk.dim(`\nMemory ID: ${result.memoryId}`));
 
         db.close();
       } catch (error) {

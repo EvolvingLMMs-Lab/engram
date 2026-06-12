@@ -1,5 +1,5 @@
-import type { MemoryStore } from '../memory/store.js';
 import type { EmbeddingService } from '../embedding/service.js';
+import type { MemoryStore } from '../memory/store.js';
 
 /**
  * Result of consolidating a team's memories into a summary

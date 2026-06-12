@@ -16,17 +16,19 @@
  * Compare with ../integration/server.integration.test.ts which mocks
  * McpServer and calls tool handlers directly (integration test).
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
 // ── Paths ────────────────────────────────────────────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SERVER_BIN = resolve(__dirname, '../../dist/bin.js');
+const TOOL_REQUEST_OPTIONS = { timeout: 120_000 } as const;
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -39,6 +41,13 @@ function getText(result: Awaited<ReturnType<Client['callTool']>>): string {
       .join('\n');
   }
   return '';
+}
+
+function callTool(
+  client: Client,
+  params: Parameters<Client['callTool']>[0]
+): ReturnType<Client['callTool']> {
+  return client.callTool(params, undefined, TOOL_REQUEST_OPTIONS);
 }
 
 /** Build a clean env with ENGRAM_PATH / ENGRAM_MODELS_DIR overrides. */
@@ -61,7 +70,7 @@ describe('MCP Server E2E — Real Protocol', () => {
   beforeAll(async () => {
     if (!existsSync(SERVER_BIN)) {
       throw new Error(
-        `Server binary not found at ${SERVER_BIN}.\nRun "pnpm build" before running E2E tests.`,
+        `Server binary not found at ${SERVER_BIN}.\nRun "pnpm build" before running E2E tests.`
       );
     }
 
@@ -80,7 +89,7 @@ describe('MCP Server E2E — Real Protocol', () => {
 
     client = new Client(
       { name: 'engram-e2e-test', version: '1.0.0' },
-      { capabilities: {} },
+      { capabilities: {} }
     );
 
     // connect() performs the full MCP initialize handshake
@@ -141,10 +150,11 @@ describe('MCP Server E2E — Real Protocol', () => {
   describe('save → read full cycle', () => {
     it('should save a memory and retrieve it via semantic search', async () => {
       // Save — first call triggers embedding model loading
-      const saveResult = await client.callTool({
+      const saveResult = await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
-          content: 'TypeScript uses structural typing instead of nominal typing',
+          content:
+            'TypeScript uses structural typing instead of nominal typing',
           tags: ['programming', 'typescript'],
         },
       });
@@ -155,7 +165,7 @@ describe('MCP Server E2E — Real Protocol', () => {
       expect(saveResult.isError).toBeFalsy();
 
       // Read — semantic search through the protocol
-      const readResult = await client.callTool({
+      const readResult = await callTool(client, {
         name: 'mcp_read_memory',
         arguments: {
           query: 'type system in programming languages',
@@ -174,7 +184,7 @@ describe('MCP Server E2E — Real Protocol', () => {
   describe('memory lifecycle: save → list → delete → verify', () => {
     it('should create, list, delete, and confirm deletion', async () => {
       // Save
-      const saveResult = await client.callTool({
+      const saveResult = await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
           content: 'Ephemeral memory for E2E lifecycle test',
@@ -182,26 +192,26 @@ describe('MCP Server E2E — Real Protocol', () => {
         },
       });
       const saveText = getText(saveResult);
-      const idMatch = saveText.match(/ID: ([^\)]+)/);
+      const idMatch = saveText.match(/ID: ([^)]+)/);
       expect(idMatch).not.toBeNull();
       const memoryId = idMatch![1];
 
       // List — should include the new memory
-      const listResult = await client.callTool({
+      const listResult = await callTool(client, {
         name: 'mcp_list_memories',
         arguments: { limit: 50 },
       });
       expect(getText(listResult)).toContain('Ephemeral memory');
 
       // Delete
-      const delResult = await client.callTool({
+      const delResult = await callTool(client, {
         name: 'mcp_delete_memory',
         arguments: { memory_id: memoryId },
       });
       expect(getText(delResult)).toContain('has been deleted');
 
       // Verify deleted — second delete should say "not found"
-      const delAgain = await client.callTool({
+      const delAgain = await callTool(client, {
         name: 'mcp_delete_memory',
         arguments: { memory_id: memoryId },
       });
@@ -215,7 +225,7 @@ describe('MCP Server E2E — Real Protocol', () => {
     it('should redact secrets before storing', async () => {
       const fakeKey = 'sk-' + 'a'.repeat(48);
 
-      const saveResult = await client.callTool({
+      const saveResult = await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
           content: `My OpenAI key is ${fakeKey} and I use it daily`,
@@ -228,7 +238,7 @@ describe('MCP Server E2E — Real Protocol', () => {
       expect(saveText).not.toContain(fakeKey);
 
       // Read back — should also not contain the raw key
-      const readResult = await client.callTool({
+      const readResult = await callTool(client, {
         name: 'mcp_read_memory',
         arguments: { query: 'OpenAI API key', limit: 3 },
       });
@@ -240,7 +250,7 @@ describe('MCP Server E2E — Real Protocol', () => {
 
   describe('mcp_memory_status', () => {
     it('should report memory count and embedding model state', async () => {
-      const result = await client.callTool({
+      const result = await callTool(client, {
         name: 'mcp_memory_status',
         arguments: {},
       });
@@ -256,7 +266,7 @@ describe('MCP Server E2E — Real Protocol', () => {
   describe('mcp_find_similar_sessions', () => {
     it('should find session-indexed memories via semantic search', async () => {
       // Save a session-like memory
-      await client.callTool({
+      await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
           content: 'Implemented OAuth2 PKCE flow with refresh token rotation',
@@ -264,7 +274,7 @@ describe('MCP Server E2E — Real Protocol', () => {
         },
       });
 
-      const result = await client.callTool({
+      const result = await callTool(client, {
         name: 'mcp_find_similar_sessions',
         arguments: {
           intent: 'authentication flow implementation',
@@ -282,39 +292,40 @@ describe('MCP Server E2E — Real Protocol', () => {
   describe('multi-tool workflow', () => {
     it('should save multiple → search → delete → verify removal', async () => {
       // Save two memories
-      const r1 = await client.callTool({
+      const r1 = await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
           content: 'Docker uses cgroups and namespaces for container isolation',
           tags: ['infra'],
         },
       });
-      const r2 = await client.callTool({
+      const r2 = await callTool(client, {
         name: 'mcp_save_memory',
         arguments: {
-          content: 'Kubernetes orchestrates container workloads across clusters',
+          content:
+            'Kubernetes orchestrates container workloads across clusters',
           tags: ['infra'],
         },
       });
 
-      const id1 = getText(r1).match(/ID: ([^\)]+)/)![1];
-      const id2 = getText(r2).match(/ID: ([^\)]+)/)![1];
+      const id1 = getText(r1).match(/ID: ([^)]+)/)![1];
+      const id2 = getText(r2).match(/ID: ([^)]+)/)![1];
 
       // Search — should find both
-      const search1 = await client.callTool({
+      const search1 = await callTool(client, {
         name: 'mcp_read_memory',
         arguments: { query: 'container infrastructure', limit: 10 },
       });
       expect(getText(search1)).toContain('Found');
 
       // Delete Docker memory
-      await client.callTool({
+      await callTool(client, {
         name: 'mcp_delete_memory',
         arguments: { memory_id: id1 },
       });
 
       // Search again — only Kubernetes should remain
-      const search2 = await client.callTool({
+      const search2 = await callTool(client, {
         name: 'mcp_read_memory',
         arguments: { query: 'container orchestration', limit: 10 },
       });
@@ -323,7 +334,7 @@ describe('MCP Server E2E — Real Protocol', () => {
       expect(text2).not.toContain('Docker');
 
       // Cleanup
-      await client.callTool({
+      await callTool(client, {
         name: 'mcp_delete_memory',
         arguments: { memory_id: id2 },
       });
@@ -334,7 +345,7 @@ describe('MCP Server E2E — Real Protocol', () => {
 
   describe('secret tools without vault', () => {
     it('mcp_get_secret should return vault-not-initialized error', async () => {
-      const result = await client.callTool({
+      const result = await callTool(client, {
         name: 'mcp_get_secret',
         arguments: { key: 'TEST_KEY' },
       });
@@ -344,7 +355,7 @@ describe('MCP Server E2E — Real Protocol', () => {
     });
 
     it('mcp_set_secret should return vault-not-initialized error', async () => {
-      const result = await client.callTool({
+      const result = await callTool(client, {
         name: 'mcp_set_secret',
         arguments: { key: 'TEST_KEY', value: 'secret-value' },
       });
@@ -354,7 +365,7 @@ describe('MCP Server E2E — Real Protocol', () => {
     });
 
     it('mcp_create_recovery_kit should return vault-key-not-configured error', async () => {
-      const result = await client.callTool({
+      const result = await callTool(client, {
         name: 'mcp_create_recovery_kit',
         arguments: { shares: 5, threshold: 3 },
       });

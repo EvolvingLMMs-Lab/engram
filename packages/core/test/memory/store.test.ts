@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { MemoryStore } from '../../src/memory/store';
 
 // Mock DLPSanitizer
